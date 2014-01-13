@@ -1,0 +1,3 @@
+org.xwiki.websocket.internal.XWikiWebSocketScriptService
+org.xwiki.websocket.internal.NettosphereWebSocketService
+org.xwiki.websocket.internal.EchoWebSocketHandler
