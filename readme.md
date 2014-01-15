@@ -64,7 +64,7 @@ ws.onmessage = function (msg) {
 };
 ```
 
-Read the code of the [EchoWebSocketHandler](https://github.com/cjdelisle/xwiki-contrib-websocket/tree/master/xwiki-contrib-websocket-nettosphere/src/main/java/org.xwiki.websocket/EchoWebSocketHandler.java)
+Read the code of the [EchoWebSocketHandler](https://github.com/xwiki-contrib/xwiki-contrib-websocket/tree/master/xwiki-contrib-websocket-nettosphere/src/main/java/org.xwiki.websocket/EchoWebSocketHandler.java)
 for yourself.
 
 ## Bugs
