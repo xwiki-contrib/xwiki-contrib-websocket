@@ -29,15 +29,78 @@
   <parent>
    <groupId>org.xwiki.commons</groupId>
    <artifactId>xwiki-commons-pom</artifactId>
-   <version>5.4-SNAPSHOT</version>
+   <version>5.3</version>
   </parent>
   <artifactId>xwiki-contrib-websocket</artifactId>
   <name>XWiki Contrib - WebSocket</name>
   <description>XWiki Contrib - WebSocket</description>
-  <packaging>pom</packaging>
-  <modules>
-    <module>xwiki-contrib-websocket-api</module>
-    <module>xwiki-contrib-websocket-nettosphere</module>
-  </modules>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>org.xwiki.commons</groupId>
+      <artifactId>xwiki-commons-component-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.xwiki.commons</groupId>
+      <artifactId>xwiki-contrib-websocket-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-bridge</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-container-servlet</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.atmosphere</groupId>
+        <artifactId>atmosphere-runtime</artifactId>
+        <version>2.0.5</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.atmosphere</groupId>
+        <artifactId>nettosphere</artifactId>
+        <version>2.0.2</version>
+        <exclusions>
+            <exclusion>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+
+    <dependency>
+        <groupId>org.apache.geronimo.specs</groupId>
+        <artifactId>geronimo-servlet_3.0_spec</artifactId>
+        <version>1.0</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-mapper-asl</artifactId>
+        <version>1.9.3</version>
+    </dependency>
+
+  </dependencies>
 
 </project>
