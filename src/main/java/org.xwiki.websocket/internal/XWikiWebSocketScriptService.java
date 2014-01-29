@@ -27,6 +27,7 @@ import org.xwiki.bridge.DocumentAccessBridge;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.container.servlet.ServletRequest;
 import org.xwiki.container.Container;
+import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.script.service.ScriptService;
 import org.xwiki.websocket.WebSocketService;
 
@@ -34,6 +35,9 @@ import org.xwiki.websocket.WebSocketService;
 @Named("websocket")
 public class XWikiWebSocketScriptService implements ScriptService
 {
+    public static final DocumentReference GUEST_USER =
+        new DocumentReference("xwiki", "XWiki", "XWikiGuest");
+
     @Inject
     private DocumentAccessBridge bridge;
 
@@ -55,7 +59,8 @@ public class XWikiWebSocketScriptService implements ScriptService
                 host = host.substring(0, host.indexOf(':'));
             }
         }
-        return "ws://" + host + ":" + sock.getPort() + "/" + path + "?k="
-            + this.sock.getKey(this.bridge.getCurrentUserReference());
+        DocumentReference user = this.bridge.getCurrentUserReference();
+        if (user == null) { user = GUEST_USER; }
+        return "ws://" + host + ":" + sock.getPort() + "/" + path + "?k=" + this.sock.getKey(user);
     }
 }
