@@ -17,7 +17,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.xwiki.websocket.internal;
+package org.xwiki.contrib.websocket.internal;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -42,8 +42,8 @@ import org.xwiki.component.annotation.Component;
 import org.xwiki.component.manager.ComponentManager;
 import org.xwiki.configuration.ConfigurationSource;
 import org.xwiki.model.reference.DocumentReference;
-import org.xwiki.websocket.WebSocketService;
-import org.xwiki.websocket.WebSocketHandler;
+import org.xwiki.contrib.websocket.WebSocketService;
+import org.xwiki.contrib.websocket.WebSocketHandler;
 
 @Component
 @Named("nettosphere")

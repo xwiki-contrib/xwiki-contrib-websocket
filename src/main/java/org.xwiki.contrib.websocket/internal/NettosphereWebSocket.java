@@ -17,7 +17,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.xwiki.websocket.internal;
+package org.xwiki.contrib.websocket.internal;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -25,7 +25,7 @@ import javax.inject.Inject;
 
 import org.atmosphere.cpr.AtmosphereResource;
 import org.xwiki.model.reference.DocumentReference;
-import org.xwiki.websocket.WebSocket;
+import org.xwiki.contrib.websocket.WebSocket;
 
 public class NettosphereWebSocket implements WebSocket
 {

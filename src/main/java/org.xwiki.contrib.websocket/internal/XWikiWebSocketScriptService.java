@@ -17,7 +17,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.xwiki.websocket.internal;
+package org.xwiki.contrib.websocket.internal;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -29,7 +29,7 @@ import org.xwiki.container.servlet.ServletRequest;
 import org.xwiki.container.Container;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.script.service.ScriptService;
-import org.xwiki.websocket.WebSocketService;
+import org.xwiki.contrib.websocket.WebSocketService;
 
 @Component
 @Named("websocket")

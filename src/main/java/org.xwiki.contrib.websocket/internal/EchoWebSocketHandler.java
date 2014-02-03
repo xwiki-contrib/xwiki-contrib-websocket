@@ -17,12 +17,29 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.xwiki.websocket;
+package org.xwiki.contrib.websocket.internal;
 
-import org.xwiki.component.annotation.Role;
+import javax.inject.Named;
+import org.xwiki.component.annotation.Component;
+import org.xwiki.contrib.websocket.WebSocketHandler;
+import org.xwiki.contrib.websocket.WebSocket;
 
-@Role
-public interface WebSocketHandler
+@Component
+@Named("echo")
+public class EchoWebSocketHandler implements WebSocketHandler
 {
-    public void onWebSocketConnect(WebSocket sock);
+    public void onWebSocketConnect(WebSocket sock)
+    {
+        sock.onMessage(new WebSocket.Callback() {
+            public void call(WebSocket sock) {
+                String msg = sock.recv();
+                sock.send(msg);
+            }
+        });
+        sock.onDisconnect(new WebSocket.Callback() {
+            public void call(WebSocket sock) {
+                System.out.println("User [" + sock.getUser() + "] disconnected");
+            }
+        });
+    }
 }

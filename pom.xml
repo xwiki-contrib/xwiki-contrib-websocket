@@ -30,6 +30,7 @@
    <version>5.2</version>
   </parent>
   <version>1.0</version>
+  <groupId>org.xwiki.contrib</groupId>
   <artifactId>xwiki-contrib-websocket</artifactId>
   <name>WebSocket Integration</name>
   <description>Allows you to create WebSocket enabled Applications in XWiki</description>

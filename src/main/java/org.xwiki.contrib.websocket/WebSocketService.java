@@ -17,25 +17,15 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.xwiki.websocket;
+package org.xwiki.contrib.websocket;
 
+import org.xwiki.component.annotation.Role;
 import org.xwiki.model.reference.DocumentReference;
 
-public interface WebSocket
+@Role
+public interface WebSocketService
 {
-    public DocumentReference getUser();
-    public String getPath();
-
-    public void send(String message);
-
-    /** @return null unless inside of onMessage() callback in which case return   */
-    public String recv();
-    public void onMessage(Callback cb);
-
-    public void onDisconnect(Callback cb);
-
-    public interface Callback
-    {
-        public void call(WebSocket ws);
-    }
+    public String getKey(DocumentReference userRef);
+    public String getExternalHost();
+    public int getPort();
 }
