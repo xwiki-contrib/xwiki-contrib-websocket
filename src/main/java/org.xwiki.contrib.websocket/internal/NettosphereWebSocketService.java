@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.io.StringWriter;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.inject.Named;
 
 import org.slf4j.Logger;
@@ -47,6 +48,7 @@ import org.xwiki.contrib.websocket.WebSocketHandler;
 
 @Component
 @Named("nettosphere")
+@Singleton
 public class NettosphereWebSocketService implements WebSocketService, Handler, Initializable
 {
     private int port;
@@ -130,6 +132,15 @@ public class NettosphereWebSocketService implements WebSocketService, Handler, I
 
                     final NettosphereWebSocket s = sock;
                     r.addEventListener(new WebSocketEventListenerAdapter() {
+                        public void onMessage(WebSocketEventListener.WebSocketEvent event) {
+                            //System.out.println("onMessage(" + event.message() + ")");
+                            try {
+                                s.message(event.message().toString());
+                            } catch (Exception e) {
+                                logger.warn("Exception in WebSocket.message()... [{}]",
+                                            ExceptionUtils.getStackTrace(e));
+                            }
+                        }
                         public void onDisconnect(WebSocketEventListener.WebSocketEvent event) {
                             s.disconnect();
                             sockByKeyAndURI.remove(s.getKey() + s.getPath());
@@ -142,20 +153,9 @@ public class NettosphereWebSocketService implements WebSocketService, Handler, I
                 return;
             }
 
-            String content = "";
-            StringWriter writer = new StringWriter();
-            IOUtils.copy(r.getRequest().getReader(), writer);
-            content = writer.toString();
-
-            //System.out.println(uri + " got content! " + content);
-
-            try {
-                sock.message(content);
-            } catch (Exception e) {
-                logger.warn("Exception in WebSocket.message()... [{}]",
-                            ExceptionUtils.getStackTrace(e));
-            }
-
-        } catch (Exception iDoNotCare) { iDoNotCare.printStackTrace(); }
+        } catch (Exception ohCrap) {
+            logger.warn("Something broke when taking a connection [{}]",
+                        ExceptionUtils.getStackTrace(ohCrap));
+        }
     }
 }

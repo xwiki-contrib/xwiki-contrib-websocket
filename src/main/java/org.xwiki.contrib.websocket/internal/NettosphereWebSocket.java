@@ -23,12 +23,16 @@ import java.util.List;
 import java.util.ArrayList;
 import javax.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.atmosphere.cpr.AtmosphereResource;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.contrib.websocket.WebSocket;
 
 public class NettosphereWebSocket implements WebSocket
 {
+    private final Logger logger = LoggerFactory.getLogger(NettosphereWebSocket.class);
     private final String key;
     private final DocumentReference user;
     private final String path;
@@ -49,7 +53,7 @@ public class NettosphereWebSocket implements WebSocket
 
     public void send(String message)
     {
-        ar.getResponse().write(message);
+        ar.write(message);
     }
 
     public String recv() { return this.currentMessage; }
@@ -61,7 +65,12 @@ public class NettosphereWebSocket implements WebSocket
     {
         for (WebSocket.Callback cb : this.messageHandlers) {
             this.currentMessage = msg;
-            cb.call(this);
+            try {
+                cb.call(this);
+            } catch (Exception e) {
+                logger.warn("Exception in WebSocket.onMessage() [{}]",
+                            ExceptionUtils.getStackTrace(e));
+            }
             this.currentMessage = null;
         }
     }
@@ -69,7 +78,12 @@ public class NettosphereWebSocket implements WebSocket
     void disconnect()
     {
         for (WebSocket.Callback cb : this.disconnectHandlers) {
-            cb.call(this);
+            try {
+                cb.call(this);
+            } catch (Exception e) {
+                logger.warn("Exception in WebSocket.onDisconnect() [{}]",
+                            ExceptionUtils.getStackTrace(e));
+            }
         }
     }
 
