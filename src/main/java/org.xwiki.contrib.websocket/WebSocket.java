@@ -25,6 +25,7 @@ public interface WebSocket
 {
     public DocumentReference getUser();
     public String getPath();
+    public String getWiki();
 
     public void send(String message);
 

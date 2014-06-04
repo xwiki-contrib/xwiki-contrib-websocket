@@ -30,6 +30,10 @@ import org.xwiki.container.Container;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.script.service.ScriptService;
 import org.xwiki.contrib.websocket.WebSocketService;
+import org.xwiki.contrib.websocket.WebSocketHandler;
+import org.xwiki.component.manager.ComponentManager;
+import org.xwiki.component.manager.ComponentLookupException;
+import org.xwiki.component.internal.multi.ComponentManagerManager;
 
 @Component
 @Named("websocket")
@@ -46,21 +50,50 @@ public class XWikiWebSocketScriptService implements ScriptService
     private WebSocketService sock;
 
     @Inject
+    private ComponentManagerManager compMgrMgr;
+
+    @Inject
     private Container cont;
 
-    public String getURL(String path)
+    /**
+     * This will throw an error if the component does not exist which is more helpful than
+     * the error being thrown somewhere deep inside of the websocket infra where it can only
+     * be printed to the log.
+     */
+    private void checkHandlerExists(String wiki, String handler)
     {
-        String host = sock.getExternalHost();
-        if (host == null) {
+        ComponentManager cm = this.compMgrMgr.getComponentManager("wiki:" + wiki, false);
+        if (cm == null) {
+            throw new RuntimeException("Could not find ComponentManager for this wiki.");
+        }
+        try {
+            cm.getInstance(WebSocketHandler.class, handler);
+        } catch (ComponentLookupException e) {
+            throw new RuntimeException("Could not find a WebSocketHandler for [" + handler + "]");
+        }
+    }
+
+    public String getURL(String handlerName)
+    {
+        String wiki = this.bridge.getCurrentDocumentReference().getRoot().getName();
+
+        checkHandlerExists(wiki, handlerName);
+
+        String externalPath = sock.getExternalPath();
+        if (externalPath == null) {
             HttpServletRequest hsr =
                 ((ServletRequest) this.cont.getRequest()).getHttpServletRequest();
-            host = hsr.getHeader("host");
+
+            String host = hsr.getHeader("host");
             if (host.indexOf(':') != -1) {
                 host = host.substring(0, host.indexOf(':'));
             }
+
+            externalPath = "ws://" + host + ":" + sock.getPort() + "/";
         }
+        if (!externalPath.endsWith("/")) { externalPath += "/"; }
         DocumentReference user = this.bridge.getCurrentUserReference();
         if (user == null) { user = GUEST_USER; }
-        return "ws://" + host + ":" + sock.getPort() + "/" + path + "?k=" + this.sock.getKey(user);
+        return externalPath + wiki + "/" + handlerName + "?k=" + this.sock.getKey(user);
     }
 }

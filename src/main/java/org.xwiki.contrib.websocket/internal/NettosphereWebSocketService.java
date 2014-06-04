@@ -45,6 +45,7 @@ import org.xwiki.configuration.ConfigurationSource;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.contrib.websocket.WebSocketService;
 import org.xwiki.contrib.websocket.WebSocketHandler;
+import org.xwiki.component.internal.multi.ComponentManagerManager;
 
 @Component
 @Named("nettosphere")
@@ -52,15 +53,15 @@ import org.xwiki.contrib.websocket.WebSocketHandler;
 public class NettosphereWebSocketService implements WebSocketService, Handler, Initializable
 {
     private int port;
-    private String externalHost;
+    private String externalPath;
 
     private Map<String, DocumentReference> userByKey = new HashMap<String, DocumentReference>();
     private Map<DocumentReference, String> keyByUser = new HashMap<DocumentReference, String>();
-    private Map<String, NettosphereWebSocket> sockByKeyAndURI =
+    private Map<String, NettosphereWebSocket> sockByURI =
         new HashMap<String, NettosphereWebSocket>();
 
     @Inject
-    private ComponentManager compMgr;
+    private ComponentManagerManager compMgrMgr;
 
     @Inject
     private ConfigurationSource cs;
@@ -84,7 +85,7 @@ public class NettosphereWebSocketService implements WebSocketService, Handler, I
     public void initialize()
     {
         String bindTo = cs.getProperty("websocket.bindTo", "0.0.0.0");
-        this.externalHost = cs.getProperty("websocket.externalHost", String.class);
+        this.externalPath = cs.getProperty("websocket.externalPath", String.class);
         this.port = cs.getProperty("websocket.port", 8093);
 
         Config.Builder b = new Config.Builder();
@@ -93,9 +94,9 @@ public class NettosphereWebSocketService implements WebSocketService, Handler, I
         s.start();
     }
 
-    public String getExternalHost()
+    public String getExternalPath()
     {
-        return this.externalHost;
+        return this.externalPath;
     }
 
     public int getPort()
@@ -114,15 +115,25 @@ public class NettosphereWebSocketService implements WebSocketService, Handler, I
                 return;
             }
 
-            // strip leading /
-            String uri = r.getRequest().getRequestURI().substring(1);
+            String uri = r.getRequest().getRequestURI();
+            String handlerName = uri.substring(uri.lastIndexOf('/') + 1);
+            String wiki = uri.substring(0,uri.lastIndexOf('/'));
+            wiki = wiki.substring(wiki.lastIndexOf('/') + 1);
 
-            NettosphereWebSocket sock = this.sockByKeyAndURI.get(key + uri);
+            // sort of "cannonicalize" the uri into <wiki>/<handler>?<key>
+            uri = wiki + "/" + handlerName + "?" + key;
+
+            NettosphereWebSocket sock = this.sockByURI.get(uri);
             if (sock == null || !sock.uuid().equals(r.uuid())) {
-                WebSocketHandler handler = this.compMgr.getInstance(WebSocketHandler.class, uri);
+                ComponentManager cm = this.compMgrMgr.getComponentManager("wiki:" + wiki, false);
+                if (cm == null) {
+                    throw new RuntimeException("No ComponentManager could be found for wiki [" +
+                                               wiki + "] are you sure it is a real subwiki?");
+                }
+                WebSocketHandler handler = cm.getInstance(WebSocketHandler.class, handlerName);
                 if (handler != null) {
-                    sock = new NettosphereWebSocket(user, uri, r, key);
-                    this.sockByKeyAndURI.put(key + uri, sock);
+                    sock = new NettosphereWebSocket(user, uri, r, key, wiki);
+                    this.sockByURI.put(uri, sock);
                     try {
                         handler.onWebSocketConnect(sock);
                     } catch (Exception e) {
@@ -143,7 +154,7 @@ public class NettosphereWebSocketService implements WebSocketService, Handler, I
                         }
                         public void onDisconnect(WebSocketEventListener.WebSocketEvent event) {
                             s.disconnect();
-                            sockByKeyAndURI.remove(s.getKey() + s.getPath());
+                            sockByURI.remove(s.getKey() + "/" + s.getPath());
                         }
                     });
                 } else {

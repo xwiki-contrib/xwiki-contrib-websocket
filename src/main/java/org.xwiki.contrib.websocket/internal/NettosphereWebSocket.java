@@ -36,20 +36,28 @@ public class NettosphereWebSocket implements WebSocket
     private final String key;
     private final DocumentReference user;
     private final String path;
+    private final String wiki;
     private final AtmosphereResource ar;
     private String currentMessage;
     private final List<WebSocket.Callback> messageHandlers = new ArrayList<WebSocket.Callback>();
     private final List<WebSocket.Callback> disconnectHandlers = new ArrayList<WebSocket.Callback>();
 
-    NettosphereWebSocket(DocumentReference user, String path, AtmosphereResource ar, String key) {
+    NettosphereWebSocket(DocumentReference user,
+                         String path,
+                         AtmosphereResource ar,
+                         String key,
+                         String wiki)
+    {
         this.user = user;
         this.path = path;
         this.ar = ar;
         this.key = key;
+        this.wiki = wiki;
     }
 
     public DocumentReference getUser() { return this.user; }
     public String getPath() { return this.path; }
+    public String getWiki() { return this.wiki; }
 
     public void send(String message)
     {

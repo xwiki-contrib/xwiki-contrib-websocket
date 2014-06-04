@@ -26,6 +26,6 @@ import org.xwiki.model.reference.DocumentReference;
 public interface WebSocketService
 {
     public String getKey(DocumentReference userRef);
-    public String getExternalHost();
+    public String getExternalPath();
     public int getPort();
 }
