@@ -21,36 +21,36 @@ package org.xwiki.contrib.websocket.internal;
 
 import java.util.List;
 import java.util.ArrayList;
-import javax.inject.Inject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.atmosphere.cpr.AtmosphereResource;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.contrib.websocket.WebSocket;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.channel.ChannelHandlerContext;
 
-public class NettosphereWebSocket implements WebSocket
+public class NettyWebSocket implements WebSocket
 {
-    private final Logger logger = LoggerFactory.getLogger(NettosphereWebSocket.class);
+    private final Logger logger = LoggerFactory.getLogger(NettyWebSocket.class);
     private final String key;
     private final DocumentReference user;
     private final String path;
     private final String wiki;
-    private final AtmosphereResource ar;
+    private final ChannelHandlerContext ctx;
     private String currentMessage;
     private final List<WebSocket.Callback> messageHandlers = new ArrayList<WebSocket.Callback>();
     private final List<WebSocket.Callback> disconnectHandlers = new ArrayList<WebSocket.Callback>();
 
-    NettosphereWebSocket(DocumentReference user,
-                         String path,
-                         AtmosphereResource ar,
-                         String key,
-                         String wiki)
+    NettyWebSocket(DocumentReference user,
+                   String path,
+                   ChannelHandlerContext ctx,
+                   String key,
+                   String wiki)
     {
         this.user = user;
         this.path = path;
-        this.ar = ar;
+        this.ctx = ctx;
         this.key = key;
         this.wiki = wiki;
     }
@@ -61,7 +61,7 @@ public class NettosphereWebSocket implements WebSocket
 
     public void send(String message)
     {
-        ar.write(message);
+        this.ctx.channel().write(new TextWebSocketFrame(message));
     }
 
     public String recv() { return this.currentMessage; }
@@ -95,6 +95,5 @@ public class NettosphereWebSocket implements WebSocket
         }
     }
 
-    String uuid() { return this.ar.uuid(); }
     String getKey() { return this.key; }
 }

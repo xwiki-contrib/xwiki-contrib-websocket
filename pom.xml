@@ -62,6 +62,13 @@
 
     <dependency>
       <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-security-api</artifactId>
+      <version>${xwiki.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
       <artifactId>xwiki-platform-bridge</artifactId>
       <version>${xwiki.version}</version>
       <scope>provided</scope>
@@ -73,6 +80,12 @@
       <version>${xwiki.version}</version>
       <scope>provided</scope>
     </dependency>
+<!--
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency> 
 
     <dependency>
       <groupId>org.atmosphere</groupId>
@@ -107,6 +120,13 @@
     </dependency>
 
     <dependency>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-mapper-asl</artifactId>
+      <version>1.9.3</version>
+    </dependency>-->
+
+    <!-- Used in XWikiWebSocketScriptService -->
+    <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
       <artifactId>geronimo-servlet_3.0_spec</artifactId>
       <version>1.0</version>
@@ -114,10 +134,11 @@
     </dependency>
 
     <dependency>
-      <groupId>org.codehaus.jackson</groupId>
-      <artifactId>jackson-mapper-asl</artifactId>
-      <version>1.9.3</version>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-all</artifactId>
+      <version>4.0.23.Final</version>
     </dependency>
+
 
   </dependencies>
 

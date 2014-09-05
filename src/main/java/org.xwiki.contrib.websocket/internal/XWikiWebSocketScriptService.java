@@ -21,7 +21,10 @@ package org.xwiki.contrib.websocket.internal;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.bind.DatatypeConverter;
+import java.security.MessageDigest;
 
 import org.xwiki.bridge.DocumentAccessBridge;
 import org.xwiki.component.annotation.Component;
@@ -29,13 +32,18 @@ import org.xwiki.container.servlet.ServletRequest;
 import org.xwiki.container.Container;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.script.service.ScriptService;
-import org.xwiki.contrib.websocket.WebSocketService;
+import org.xwiki.contrib.websocket.internal.WebSocketService;
 import org.xwiki.contrib.websocket.WebSocketHandler;
 import org.xwiki.component.manager.ComponentManager;
 import org.xwiki.component.manager.ComponentLookupException;
 import org.xwiki.component.internal.multi.ComponentManagerManager;
+import org.xwiki.security.authorization.AuthorizationManager;
+import org.xwiki.security.authorization.Right;
+import org.apache.commons.lang3.RandomStringUtils;
+
 
 @Component
+@Singleton
 @Named("websocket")
 public class XWikiWebSocketScriptService implements ScriptService
 {
@@ -46,7 +54,7 @@ public class XWikiWebSocketScriptService implements ScriptService
     private DocumentAccessBridge bridge;
 
     @Inject
-    @Named("nettosphere")
+    @Named("netty")
     private WebSocketService sock;
 
     @Inject
@@ -54,6 +62,15 @@ public class XWikiWebSocketScriptService implements ScriptService
 
     @Inject
     private Container cont;
+
+    @Inject
+    private WebSocketConfig conf;
+
+    @Inject
+    private AuthorizationManager authMgr;
+
+    /** The master key used for creation of document keys. */
+    private String secret = RandomStringUtils.randomAlphanumeric(32);
 
     /**
      * This will throw an error if the component does not exist which is more helpful than
@@ -73,13 +90,20 @@ public class XWikiWebSocketScriptService implements ScriptService
         }
     }
 
+    private DocumentReference getUser()
+    {
+        DocumentReference user = this.bridge.getCurrentUserReference();
+        if (user == null) { user = GUEST_USER; }
+        return user;
+    }
+
     public String getURL(String handlerName)
     {
         String wiki = this.bridge.getCurrentDocumentReference().getRoot().getName();
 
         checkHandlerExists(wiki, handlerName);
 
-        String externalPath = sock.getExternalPath();
+        String externalPath = this.conf.getExternalPath();
         if (externalPath == null) {
             HttpServletRequest hsr =
                 ((ServletRequest) this.cont.getRequest()).getHttpServletRequest();
@@ -89,11 +113,28 @@ public class XWikiWebSocketScriptService implements ScriptService
                 host = host.substring(0, host.indexOf(':'));
             }
 
-            externalPath = "ws://" + host + ":" + sock.getPort() + "/";
+            String proto = "ws";
+            if (this.conf.sslEnabled()) {
+                proto = "wss";
+            }
+
+            externalPath = proto + "://" + host + ":" + this.conf.getPort() + "/";
+        } else if (!externalPath.endsWith("/")) {
+            externalPath += "/";
         }
-        if (!externalPath.endsWith("/")) { externalPath += "/"; }
-        DocumentReference user = this.bridge.getCurrentUserReference();
-        if (user == null) { user = GUEST_USER; }
-        return externalPath + wiki + "/" + handlerName + "?k=" + this.sock.getKey(user);
+        return externalPath + wiki + "/" + handlerName + "?k=" + this.sock.getKey(getUser());
+    }
+
+    public String getDocumentKey(DocumentReference ref)
+    {
+        if (!this.authMgr.hasAccess(Right.EDIT, getUser(), ref)) {
+            return "ENOPERM";
+        }
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            return DatatypeConverter.printBase64Binary(md.digest((this.secret + ref).getBytes()));
+        } catch(Exception e) {
+            throw new RuntimeException("should never happen");
+        }
     }
 }
