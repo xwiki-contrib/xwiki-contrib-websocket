@@ -122,25 +122,27 @@ public class NettyWebSocketService implements WebSocketService, Initializable
                 sslCtx = null;
             }
 
-            EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-            EventLoopGroup workerGroup = new NioEventLoopGroup();
-            try {
-                ServerBootstrap b = new ServerBootstrap();
-                b.group(bossGroup, workerGroup)
-                    .channel(NioServerSocketChannel.class)
-                    .handler(new LoggingHandler(LogLevel.INFO))
-                    .childHandler(new WebSocketServerInitializer(sslCtx, this));
+            final EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+            final EventLoopGroup workerGroup = new NioEventLoopGroup();
 
-                Channel ch = b.bind(this.conf.getBindTo(), this.conf.getPort()).sync().channel();
+            ServerBootstrap b = new ServerBootstrap();
+            b.group(bossGroup, workerGroup)
+                .channel(NioServerSocketChannel.class)
+                .handler(new LoggingHandler(LogLevel.INFO))
+                .childHandler(new WebSocketServerInitializer(sslCtx, this));
 
-                System.err.println("Open your web browser and navigate to " +
-                        (ssl? "https" : "http") + "://127.0.0.1:" + this.conf.getPort() + '/');
+            Channel ch = b.bind(this.conf.getBindTo(), this.conf.getPort()).sync().channel();
 
-                ch.closeFuture().sync();
-            } finally {
-                bossGroup.shutdownGracefully();
-                workerGroup.shutdownGracefully();
-            }
+            System.err.println("Open your web browser and navigate to " +
+                    (ssl? "https" : "http") + "://127.0.0.1:" + this.conf.getPort() + '/');
+
+            ch.closeFuture().addListener(new GenericFutureListener<ChannelFuture>() {
+                public void operationComplete(ChannelFuture f) {
+                    bossGroup.shutdownGracefully();
+                    workerGroup.shutdownGracefully();
+                }
+            });
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
