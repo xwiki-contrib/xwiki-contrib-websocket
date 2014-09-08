@@ -107,7 +107,7 @@ public class NettyWebSocketService implements WebSocketService, Initializable
         return key;
     }
 
-    public void checkCertChainAndPrivKey(File certChain, File privKey)
+    private void checkCertChainAndPrivKey(File certChain, File privKey)
     {
         if (!certChain.exists()) {
             throw new RuntimeException("SSL enabled with websocket.ssl.certChainFile set " +
@@ -130,7 +130,7 @@ public class NettyWebSocketService implements WebSocketService, Initializable
         }
     }
 
-    public void initialize0() throws Exception
+    private void initialize0() throws Exception
     {
         final SslContext sslCtx;
         if (this.conf.sslEnabled()) {
