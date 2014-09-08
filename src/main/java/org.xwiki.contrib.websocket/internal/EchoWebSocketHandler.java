@@ -28,17 +28,14 @@ import org.xwiki.contrib.websocket.WebSocket;
 @Named("echo")
 public class EchoWebSocketHandler implements WebSocketHandler
 {
+    @Override
     public void onWebSocketConnect(WebSocket sock)
     {
         sock.onMessage(new WebSocket.Callback() {
+            @Override
             public void call(WebSocket sock) {
                 String msg = sock.recv();
                 sock.send(msg);
-            }
-        });
-        sock.onDisconnect(new WebSocket.Callback() {
-            public void call(WebSocket sock) {
-                System.out.println("User [" + sock.getUser() + "] disconnected");
             }
         });
     }

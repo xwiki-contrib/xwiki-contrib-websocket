@@ -21,22 +21,38 @@ package org.xwiki.contrib.websocket;
 
 import org.xwiki.model.reference.DocumentReference;
 
+/**
+ * The WebSocket which is passed to the registered WebSocketHandler.
+ */
 public interface WebSocket
 {
-    public DocumentReference getUser();
-    public String getPath();
-    public String getWiki();
+    /** @return The user who accessed the websocket. */
+    DocumentReference getUser();
 
-    public void send(String message);
+    /** @return the *handler* (path is a misleading statement). */
+    String getPath();
+
+    /** @return the wiki where this websocket was registered. */
+    String getWiki();
+
+    /** @param message send a message on the websocket */
+    void send(String message);
 
     /** @return null unless inside of onMessage() callback in which case return   */
-    public String recv();
-    public void onMessage(Callback cb);
+    String recv();
 
-    public void onDisconnect(Callback cb);
+    /** @param cb a Callback to be called when a websocket message comes in for this handler. */
+    void onMessage(Callback cb);
 
-    public interface Callback
+    /** @param cb a Callback to be called when it is detected that the client has disconnected. */
+    void onDisconnect(Callback cb);
+
+    /**
+     * A Callback Function as an object.
+     */
+    interface Callback
     {
-        public void call(WebSocket ws);
+        /** ... */
+        void call(WebSocket ws);
     }
 }

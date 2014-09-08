@@ -32,7 +32,7 @@ public class DefaultWebSocketConfig implements WebSocketConfig
     @Override
     public boolean sslEnabled()
     {
-        return this.cs.getProperty("websocket.ssl.enable", Boolean.class);
+        return this.cs.getProperty("websocket.ssl.enable", true);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class DefaultWebSocketConfig implements WebSocketConfig
     @Override
     public String getPrivateKeyFilename()
     {
-        return this.cs.getProperty("websocket.ssl.privateKeyFile", String.class);
+        return this.cs.getProperty("websocket.ssl.pkcs8PrivateKeyFile", String.class);
     }
 
     @Override

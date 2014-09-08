@@ -21,8 +21,13 @@ package org.xwiki.contrib.websocket;
 
 import org.xwiki.component.annotation.Role;
 
+/**
+ * Implement this role with your component in order to provide a websocket
+ * service.
+ * See the example: in EchoWebSocketHandler
+ */
 @Role
 public interface WebSocketHandler
 {
-    public void onWebSocketConnect(WebSocket sock);
+    void onWebSocketConnect(WebSocket sock);
 }

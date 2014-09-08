@@ -25,5 +25,8 @@ import org.xwiki.model.reference.DocumentReference;
 @Role
 public interface WebSocketService
 {
-    public String getKey(DocumentReference userRef);
+    /**
+     * Get a token for connecting to the websocket based on the user's identity.
+     */
+    String getKey(DocumentReference userRef);
 }

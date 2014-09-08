@@ -32,7 +32,6 @@ import org.xwiki.container.servlet.ServletRequest;
 import org.xwiki.container.Container;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.script.service.ScriptService;
-import org.xwiki.contrib.websocket.internal.WebSocketService;
 import org.xwiki.contrib.websocket.WebSocketHandler;
 import org.xwiki.component.manager.ComponentManager;
 import org.xwiki.component.manager.ComponentLookupException;
@@ -133,7 +132,7 @@ public class XWikiWebSocketScriptService implements ScriptService
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
             return DatatypeConverter.printBase64Binary(md.digest((this.secret + ref).getBytes()));
-        } catch(Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("should never happen");
         }
     }

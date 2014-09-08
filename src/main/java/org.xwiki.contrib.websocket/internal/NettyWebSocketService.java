@@ -21,16 +21,13 @@ package org.xwiki.contrib.websocket.internal;
 
 import java.util.Map;
 import java.util.HashMap;
-import java.io.StringWriter;
+import java.io.File;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.inject.Named;
-import javax.inject.Provider;
-import javax.net.ssl.SSLContext;
 import java.nio.charset.StandardCharsets;
 
 import org.slf4j.Logger;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
@@ -40,7 +37,7 @@ import org.xwiki.component.manager.ComponentManager;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.contrib.websocket.WebSocketHandler;
 import org.xwiki.component.internal.multi.ComponentManagerManager;
-import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.io.FileUtils;
 
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -110,39 +107,72 @@ public class NettyWebSocketService implements WebSocketService, Initializable
         return key;
     }
 
+    public void checkCertChainAndPrivKey(File certChain, File privKey)
+    {
+        if (!certChain.exists()) {
+            throw new RuntimeException("SSL enabled with websocket.ssl.certChainFile set " +
+                                       "but the certChainFile does not seem to exist.");
+        }
+        if (!privKey.exists()) {
+            throw new RuntimeException("SSL enabled with websocket.ssl.certChainFile set " +
+                                       "but the pkcs8PrivateKeyFile does not seem to exist.");
+        }
+        String privKeyStr;
+        try {
+            privKeyStr = FileUtils.readFileToString(privKey, "UTF-8");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        if (privKeyStr.indexOf("-----BEGIN PRIVATE KEY-----") == -1) {
+            throw new RuntimeException("websocket.ssl.pkcs8PrivateKeyFile does not seem to " +
+                                       "be a PKCS8 private key. The SSLeay format is not " +
+                                       "supported.");
+        }
+    }
+
+    public void initialize0() throws Exception
+    {
+        final SslContext sslCtx;
+        if (this.conf.sslEnabled()) {
+            if (this.conf.getCertChainFilename() != null) {
+                // They provided a cert chain filename (and ostensibly a private key)
+                // ssl w/ CA signed certificate.
+                final File certChain = new File(this.conf.getCertChainFilename());
+                final File privKey = new File(this.conf.getPrivateKeyFilename());
+                checkCertChainAndPrivKey(certChain, privKey);
+                sslCtx = SslContext.newServerContext(certChain, privKey);
+            } else {
+                // SSL enabled but no certificate specified, lets use a selfie
+                SelfSignedCertificate ssc = new SelfSignedCertificate();
+                sslCtx = SslContext.newServerContext(ssc.certificate(), ssc.privateKey());
+            }
+        } else {
+            sslCtx = null;
+        }
+
+        final EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+        final EventLoopGroup workerGroup = new NioEventLoopGroup();
+
+        ServerBootstrap b = new ServerBootstrap();
+        b.group(bossGroup, workerGroup)
+            .channel(NioServerSocketChannel.class)
+            .handler(new LoggingHandler(LogLevel.INFO))
+            .childHandler(new WebSocketServerInitializer(sslCtx, this));
+
+        Channel ch = b.bind(this.conf.getBindTo(), this.conf.getPort()).sync().channel();
+
+        ch.closeFuture().addListener(new GenericFutureListener<ChannelFuture>() {
+            public void operationComplete(ChannelFuture f) {
+                bossGroup.shutdownGracefully();
+                workerGroup.shutdownGracefully();
+            }
+        });
+    }
+
     public void initialize()
     {
         try {
-            boolean ssl = this.conf.sslEnabled();
-            final SslContext sslCtx;
-            if (ssl) {
-                SelfSignedCertificate ssc = new SelfSignedCertificate();
-                sslCtx = SslContext.newServerContext(ssc.certificate(), ssc.privateKey());
-            } else {
-                sslCtx = null;
-            }
-
-            final EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-            final EventLoopGroup workerGroup = new NioEventLoopGroup();
-
-            ServerBootstrap b = new ServerBootstrap();
-            b.group(bossGroup, workerGroup)
-                .channel(NioServerSocketChannel.class)
-                .handler(new LoggingHandler(LogLevel.INFO))
-                .childHandler(new WebSocketServerInitializer(sslCtx, this));
-
-            Channel ch = b.bind(this.conf.getBindTo(), this.conf.getPort()).sync().channel();
-
-            System.err.println("Open your web browser and navigate to " +
-                    (ssl? "https" : "http") + "://127.0.0.1:" + this.conf.getPort() + '/');
-
-            ch.closeFuture().addListener(new GenericFutureListener<ChannelFuture>() {
-                public void operationComplete(ChannelFuture f) {
-                    bossGroup.shutdownGracefully();
-                    workerGroup.shutdownGracefully();
-                }
-            });
-
+            initialize0();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -209,7 +239,7 @@ public class NettyWebSocketService implements WebSocketService, Initializable
 
             // Form: /wiki/handler?k=12345
             String uri = req.getUri();
-            final String key = uri.substring(uri.indexOf("?k=")+3);
+            final String key = uri.substring(uri.indexOf("?k=") + 3);
             uri = uri.substring(0, uri.indexOf("?k="));
             final String handlerName = uri.substring(uri.lastIndexOf('/') + 1);
             uri = uri.substring(0, uri.lastIndexOf('/'));
@@ -230,7 +260,7 @@ public class NettyWebSocketService implements WebSocketService, Initializable
                     this.nwss.compMgrMgr.getComponentManager("wiki:" + wiki, false);
                 if (cm == null) {
                     ByteBuf content = Unpooled.copiedBuffer(
-                       "ERROR: no wiki found named [" + wiki + "]", StandardCharsets.UTF_8);
+                        "ERROR: no wiki found named [" + wiki + "]", StandardCharsets.UTF_8);
                     sendHttpResponse(ctx, req,
                                      new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                                                                  HttpResponseStatus.NOT_FOUND,
@@ -241,7 +271,9 @@ public class NettyWebSocketService implements WebSocketService, Initializable
                 WebSocketHandler handler = null;
                 try {
                     handler = cm.getInstance(WebSocketHandler.class, handlerName);
-                } catch (Exception wat) { }
+                } catch (Exception e) {
+                    // fall through
+                }
                 if (handler == null) {
                     ByteBuf content = Unpooled.copiedBuffer(
                         "ERROR: no registered component for path [" + handlerName + "]",
@@ -263,10 +295,11 @@ public class NettyWebSocketService implements WebSocketService, Initializable
                     handshaker.handshake(ctx.channel(), req);
                 }
 
-                final NettyWebSocket nws = new NettyWebSocket(user, handlerName, ctx, key, wiki);
+                final NettyWebSocket nwsLocal =
+                    new NettyWebSocket(user, handlerName, ctx, key, wiki);
 
                 try {
-                    handler.onWebSocketConnect(nws);
+                    handler.onWebSocketConnect(nwsLocal);
                 } catch (Exception e) {
                     this.nwss.logger.warn("Exception in {}.onWebSocketConnect()... [{}]",
                                           handler.getClass().getName(),
@@ -279,7 +312,7 @@ public class NettyWebSocketService implements WebSocketService, Initializable
                     }
                 });
 
-                this.nws = nws;
+                this.nws = nwsLocal;
 
                 return;
             }
