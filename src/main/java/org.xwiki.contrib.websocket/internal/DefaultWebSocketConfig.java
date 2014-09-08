@@ -32,7 +32,7 @@ public class DefaultWebSocketConfig implements WebSocketConfig
     @Override
     public boolean sslEnabled()
     {
-        return this.cs.getProperty("websocket.ssl.enable", true);
+        return this.cs.getProperty("websocket.ssl.enable", false);
     }
 
     @Override

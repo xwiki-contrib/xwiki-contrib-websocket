@@ -143,6 +143,8 @@ public class NettyWebSocketService implements WebSocketService, Initializable
                 sslCtx = SslContext.newServerContext(certChain, privKey);
             } else {
                 // SSL enabled but no certificate specified, lets use a selfie
+                this.logger.warn("websocket.ssl.enable = true but websocket.ssl.certChainFile " +
+                                 "is unspecified, generating a Self Signed Certificate.");
                 SelfSignedCertificate ssc = new SelfSignedCertificate();
                 sslCtx = SslContext.newServerContext(ssc.certificate(), ssc.privateKey());
             }
