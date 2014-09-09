@@ -44,6 +44,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -158,6 +159,10 @@ public class NettyWebSocketService implements WebSocketService, Initializable
         final EventLoopGroup workerGroup = new NioEventLoopGroup();
 
         ServerBootstrap b = new ServerBootstrap();
+
+        // get rid of silly lag
+        b.childOption(ChannelOption.TCP_NODELAY, Boolean.TRUE);
+
         b.group(bossGroup, workerGroup)
             .channel(NioServerSocketChannel.class)
             .handler(new LoggingHandler(LogLevel.INFO))

@@ -61,7 +61,7 @@ public class NettyWebSocket implements WebSocket
 
     public void send(String message)
     {
-        this.ctx.channel().write(new TextWebSocketFrame(message));
+        this.ctx.channel().writeAndFlush(new TextWebSocketFrame(message));
     }
 
     public String recv() { return this.currentMessage; }
