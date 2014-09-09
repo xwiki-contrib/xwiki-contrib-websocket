@@ -82,7 +82,9 @@ import io.netty.handler.logging.LogLevel;
 @Singleton
 public class NettyWebSocketService implements WebSocketService, Initializable
 {
-    private Map<String, DocumentReference> userByKey = new HashMap<String, DocumentReference>();
+    private Map<String, DocumentReference> userByWikiAndKey =
+        new HashMap<String, DocumentReference>();
+
     private Map<DocumentReference, String> keyByUser = new HashMap<DocumentReference, String>();
 
     @Inject
@@ -95,7 +97,7 @@ public class NettyWebSocketService implements WebSocketService, Initializable
     private Logger logger;
 
     @Override
-    public String getKey(DocumentReference userRef)
+    public String getKey(String wiki, DocumentReference userRef)
     {
         String key = keyByUser.get(userRef);
         if (key != null) {
@@ -103,7 +105,7 @@ public class NettyWebSocketService implements WebSocketService, Initializable
         }
         key = RandomStringUtils.randomAlphanumeric(20);
         keyByUser.put(userRef, key);
-        userByKey.put(key, userRef);
+        userByWikiAndKey.put(wiki + "|" + key, userRef);
         return key;
     }
 
@@ -171,6 +173,7 @@ public class NettyWebSocketService implements WebSocketService, Initializable
         });
     }
 
+    @Override
     public void initialize()
     {
         try {
@@ -213,11 +216,8 @@ public class NettyWebSocketService implements WebSocketService, Initializable
             this.nwss = nwss;
         }
 
+        @Override
         public void channelRead0(ChannelHandlerContext ctx, Object msg) {
-            messageReceived(ctx, msg);
-        }
-
-        public void messageReceived(ChannelHandlerContext ctx, Object msg) {
             if (msg instanceof FullHttpRequest) {
                 handleHttpRequest(ctx, (FullHttpRequest) msg);
             } else if (msg instanceof WebSocketFrame) {
@@ -225,9 +225,72 @@ public class NettyWebSocketService implements WebSocketService, Initializable
             }
         }
 
+
         @Override
         public void channelReadComplete(ChannelHandlerContext ctx) {
             ctx.flush();
+        }
+
+        private void handleHttpReqB(ChannelHandlerContext ctx,
+                                    FullHttpRequest req,
+                                    String wiki,
+                                    String handlerName,
+                                    String key,
+                                    DocumentReference user)
+        {
+            ComponentManager cm = this.nwss.compMgrMgr.getComponentManager("wiki:" + wiki, false);
+            if (cm == null) {
+                ByteBuf content = Unpooled.copiedBuffer(
+                    "ERROR: no wiki found named [" + wiki + "]", StandardCharsets.UTF_8);
+                sendHttpResponse(ctx, req,
+                                 new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                                                             HttpResponseStatus.NOT_FOUND,
+                                                             content));
+                return;
+            }
+
+            WebSocketHandler handler = null;
+            try {
+                handler = cm.getInstance(WebSocketHandler.class, handlerName);
+            } catch (Exception e) {
+                // fall through
+            }
+            if (handler == null) {
+                ByteBuf content = Unpooled.copiedBuffer(
+                    "ERROR: no registered component for path [" + handlerName + "]",
+                    StandardCharsets.UTF_8);
+                sendHttpResponse(ctx, req,
+                                 new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                                                             HttpResponseStatus.NOT_FOUND,
+                                                             content));
+                return;
+            }
+
+            String loc = getWebSocketLocation(req, this.nwss.conf.sslEnabled());
+            WebSocketServerHandshakerFactory wsFactory =
+                new WebSocketServerHandshakerFactory(loc, null, false);
+            handshaker = wsFactory.newHandshaker(req);
+            if (handshaker == null) {
+                WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
+            } else {
+                handshaker.handshake(ctx.channel(), req);
+            }
+
+            this.nws = new NettyWebSocket(user, handlerName, ctx, key, wiki);
+
+            try {
+                handler.onWebSocketConnect(this.nws);
+            } catch (Exception e) {
+                this.nwss.logger.warn("Exception in {}.onWebSocketConnect()... [{}]",
+                                      handler.getClass().getName(),
+                                      ExceptionUtils.getStackTrace(e));
+            }
+
+            ctx.channel().closeFuture().addListener(new GenericFutureListener<ChannelFuture>() {
+                public void operationComplete(ChannelFuture f) {
+                    nws.disconnect();
+                }
+            });
         }
 
         private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest req) {
@@ -247,75 +310,17 @@ public class NettyWebSocketService implements WebSocketService, Initializable
             uri = uri.substring(0, uri.lastIndexOf('/'));
             final String wiki = uri.substring(uri.lastIndexOf('/') + 1);
             uri = uri.substring(0, uri.lastIndexOf('/'));
-            final DocumentReference user = this.nwss.userByKey.get(key);
+            final DocumentReference user = this.nwss.userByWikiAndKey.get(wiki + "|" + key);
 
             if (req.getMethod() != HttpMethod.GET) {
                 this.nwss.logger.debug("request method not GET");
             } else if (!"".equals(uri)) {
                 this.nwss.logger.debug("leftover content after parsing URI");
-            } else if (user == null) {
+            } else if (user == null || key.indexOf('|') != -1) {
                 this.nwss.logger.debug("request from unknown user");
             } else {
                 // success
-
-                ComponentManager cm =
-                    this.nwss.compMgrMgr.getComponentManager("wiki:" + wiki, false);
-                if (cm == null) {
-                    ByteBuf content = Unpooled.copiedBuffer(
-                        "ERROR: no wiki found named [" + wiki + "]", StandardCharsets.UTF_8);
-                    sendHttpResponse(ctx, req,
-                                     new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                                                                 HttpResponseStatus.NOT_FOUND,
-                                                                 content));
-                    return;
-                }
-
-                WebSocketHandler handler = null;
-                try {
-                    handler = cm.getInstance(WebSocketHandler.class, handlerName);
-                } catch (Exception e) {
-                    // fall through
-                }
-                if (handler == null) {
-                    ByteBuf content = Unpooled.copiedBuffer(
-                        "ERROR: no registered component for path [" + handlerName + "]",
-                        StandardCharsets.UTF_8);
-                    sendHttpResponse(ctx, req,
-                                     new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                                                                 HttpResponseStatus.NOT_FOUND,
-                                                                 content));
-                    return;
-                }
-
-                String loc = getWebSocketLocation(req, this.nwss.conf.sslEnabled());
-                WebSocketServerHandshakerFactory wsFactory =
-                    new WebSocketServerHandshakerFactory(loc, null, false);
-                handshaker = wsFactory.newHandshaker(req);
-                if (handshaker == null) {
-                    WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
-                } else {
-                    handshaker.handshake(ctx.channel(), req);
-                }
-
-                final NettyWebSocket nwsLocal =
-                    new NettyWebSocket(user, handlerName, ctx, key, wiki);
-
-                try {
-                    handler.onWebSocketConnect(nwsLocal);
-                } catch (Exception e) {
-                    this.nwss.logger.warn("Exception in {}.onWebSocketConnect()... [{}]",
-                                          handler.getClass().getName(),
-                                          ExceptionUtils.getStackTrace(e));
-                }
-
-                ctx.channel().closeFuture().addListener(new GenericFutureListener<ChannelFuture>() {
-                    public void operationComplete(ChannelFuture f) {
-                        nws.disconnect();
-                    }
-                });
-
-                this.nws = nwsLocal;
-
+                handleHttpReqB(ctx, req, wiki, handlerName, key, user);
                 return;
             }
             // failure

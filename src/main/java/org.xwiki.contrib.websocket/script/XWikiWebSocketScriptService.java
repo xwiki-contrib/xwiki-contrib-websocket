@@ -17,7 +17,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.xwiki.contrib.websocket.internal;
+package org.xwiki.contrib.websocket.script;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -33,6 +33,8 @@ import org.xwiki.container.Container;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.script.service.ScriptService;
 import org.xwiki.contrib.websocket.WebSocketHandler;
+import org.xwiki.contrib.websocket.internal.WebSocketConfig;
+import org.xwiki.contrib.websocket.internal.WebSocketService;
 import org.xwiki.component.manager.ComponentManager;
 import org.xwiki.component.manager.ComponentLookupException;
 import org.xwiki.component.internal.multi.ComponentManagerManager;
@@ -96,6 +98,13 @@ public class XWikiWebSocketScriptService implements ScriptService
         return user;
     }
 
+    /**
+     * Get a URL for accessing the WebSocket.
+     *
+     * The exact form of this URL results from the WebSocket configuration, the current
+     * wiki and the handlerName as well as the key which grants the user authorization
+     * to access the websocket.
+     */
     public String getURL(String handlerName)
     {
         String wiki = this.bridge.getCurrentDocumentReference().getRoot().getName();
@@ -121,9 +130,21 @@ public class XWikiWebSocketScriptService implements ScriptService
         } else if (!externalPath.endsWith("/")) {
             externalPath += "/";
         }
-        return externalPath + wiki + "/" + handlerName + "?k=" + this.sock.getKey(getUser());
+        return externalPath + wiki + "/" + handlerName + "?k=" + this.sock.getKey(wiki, getUser());
     }
 
+    /**
+     * Get a token which corrisponds to a document reference.
+     *
+     * If the current user does not have permission to access the document, this function
+     * will return the string "ENOPERM".
+     * The motivation is to allow a secret value for encryption or realtime channel creation
+     * so that users who are auhorized and able to access the websocket are still not able
+     * to join websocket sessions based on documents for which they do not have edit access.
+     *
+     * @param ref a reference to the document to check.
+     * @return a base64 string or, if the user does not have access, "ENOPERM".
+     */
     public String getDocumentKey(DocumentReference ref)
     {
         if (!this.authMgr.hasAccess(Right.EDIT, getUser(), ref)) {

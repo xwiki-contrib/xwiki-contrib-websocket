@@ -1,4 +1,4 @@
-org.xwiki.contrib.websocket.internal.XWikiWebSocketScriptService
 org.xwiki.contrib.websocket.internal.NettyWebSocketService
 org.xwiki.contrib.websocket.internal.EchoWebSocketHandler
 org.xwiki.contrib.websocket.internal.DefaultWebSocketConfig
+org.xwiki.contrib.websocket.script.XWikiWebSocketScriptService
