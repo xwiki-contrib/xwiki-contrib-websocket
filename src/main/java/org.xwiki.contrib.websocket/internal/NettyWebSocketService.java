@@ -83,10 +83,9 @@ import io.netty.handler.logging.LogLevel;
 @Singleton
 public class NettyWebSocketService implements WebSocketService, Initializable
 {
-    private Map<String, DocumentReference> userByWikiAndKey =
-        new HashMap<String, DocumentReference>();
+    private Map<String, DocumentReference> userByKeyWiki = new HashMap<String, DocumentReference>();
 
-    private Map<DocumentReference, String> keyByUser = new HashMap<DocumentReference, String>();
+    private Map<String, String> keyByUserWiki = new HashMap<String, String>();
 
     @Inject
     private ComponentManagerManager compMgrMgr;
@@ -97,16 +96,27 @@ public class NettyWebSocketService implements WebSocketService, Initializable
     @Inject
     private Logger logger;
 
+    private static String getUserWiki(DocumentReference userRef, String wiki)
+    {
+        return wiki.length() + ":" + wiki + userRef.toString();
+    }
+
+    private static String getKeyWiki(String key, String wiki)
+    {
+        return wiki.length() + ":" + wiki + key;
+    }
+
     @Override
     public String getKey(String wiki, DocumentReference userRef)
     {
-        String key = keyByUser.get(userRef);
+        String userWiki = getUserWiki(userRef, wiki);
+        String key = keyByUserWiki.get(userWiki);
         if (key != null) {
             return key;
         }
         key = RandomStringUtils.randomAlphanumeric(20);
-        keyByUser.put(userRef, key);
-        userByWikiAndKey.put(wiki + "|" + key, userRef);
+        keyByUserWiki.put(userWiki, key);
+        userByKeyWiki.put(getKeyWiki(key, wiki), userRef);
         return key;
     }
 
@@ -315,7 +325,7 @@ public class NettyWebSocketService implements WebSocketService, Initializable
             uri = uri.substring(0, uri.lastIndexOf('/'));
             final String wiki = uri.substring(uri.lastIndexOf('/') + 1);
             uri = uri.substring(0, uri.lastIndexOf('/'));
-            final DocumentReference user = this.nwss.userByWikiAndKey.get(wiki + "|" + key);
+            final DocumentReference user = this.nwss.userByKeyWiki.get(getKeyWiki(key, wiki));
 
             if (req.getMethod() != HttpMethod.GET) {
                 this.nwss.logger.debug("request method not GET");
