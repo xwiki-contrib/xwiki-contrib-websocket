@@ -72,6 +72,10 @@ for yourself.
 ## Bugs
 
 * **onDisconnect** messages are not emitted when a client disconnects. This is because
-Nettosphere does not emit them and I was unable to reflect the underlying socket.
+Nettosphere does not emit them and I was unable to reflect the underlying socket. (fixed in 1.6)
 
+## Releasing with Maven
+May the force be with you and good luck.
 
+    mvn org.apache.maven.plugins:maven-release-plugin:2.5:prepare -Pintegration-tests -Darguments="-DskipTests -Dxwiki.enforcer.skip=true" -DskipTests
+    mvn org.apache.maven.plugins:maven-release-plugin:2.5:perform -Pintegration-tests -Darguments="-DskipTests -Dxwiki.enforcer.skip=true" -DskipTests
