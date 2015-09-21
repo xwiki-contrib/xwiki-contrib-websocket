@@ -29,7 +29,7 @@
     <artifactId>xwiki-commons-pom</artifactId>
     <version>5.2</version>
   </parent>
-  <version>1.5-SNAPSHOT</version>
+  <version>1.5</version>
   <groupId>org.xwiki.contrib</groupId>
   <artifactId>xwiki-contrib-websocket</artifactId>
   <name>WebSocket Integration</name>
@@ -138,4 +138,8 @@
     </plugins>
   </build>
 
+
+  <scm>
+    <tag>xwiki-contrib-websocket-1.5</tag>
+  </scm>
 </project>
