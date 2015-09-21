@@ -35,6 +35,19 @@
   <name>WebSocket Integration</name>
   <description>Allows you to create WebSocket enabled Applications in XWiki</description>
 
+  <scm>
+    <connection>scm:git:git://github.com/xwiki-contrib/xwiki-contrib-websocket.git</connection>
+    <developerConnection>scm:git:git@github.com:xwiki-contrib/xwiki-contrib-websocket.git</developerConnection>
+    <url>https://github.com/xwiki-contrib/xwiki-contrib-websocket</url>
+  </scm>
+  <distributionManagement>
+    <repository>
+      <id>xwiki-staging</id>
+      <name>XWiki Staging Repository</name>
+      <url>http://nexus.xwiki.org/nexus/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
+
   <properties>
     <xwiki.version>7.1.2</xwiki.version>
   </properties>
