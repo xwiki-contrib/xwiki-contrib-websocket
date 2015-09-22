@@ -27,7 +27,7 @@
   <parent>
     <groupId>org.xwiki.commons</groupId>
     <artifactId>xwiki-commons-pom</artifactId>
-    <version>5.2</version>
+    <version>7.1.2</version> <!-- see also xwiki.version -->
   </parent>
   <version>1.7-SNAPSHOT</version>
   <groupId>org.xwiki.contrib</groupId>
@@ -50,7 +50,15 @@
   </distributionManagement>
 
   <properties>
-    <xwiki.version>7.1.2</xwiki.version>
+
+    <!-- Don't run CLIRR here since there's no Java code. -->
+    <xwiki.clirr.skip>true</xwiki.clirr.skip>
+    <!-- The Extension name. If not defined, the <name> property is used -->
+    <xwiki.extension.name>WebSocket Integration</xwiki.extension.name>
+    <!-- The extension's category -->
+    <xwiki.extension.category>application</xwiki.extension.category>
+
+    <xwiki.version>7.1.2</xwiki.version> <!-- see also parent version -->
   </properties>
 
   <dependencies>
