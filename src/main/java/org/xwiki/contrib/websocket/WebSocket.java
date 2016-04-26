@@ -19,6 +19,9 @@
  */
 package org.xwiki.contrib.websocket;
 
+import java.util.List;
+import java.util.Map;
+
 import org.xwiki.model.reference.DocumentReference;
 
 /**
@@ -34,6 +37,9 @@ public interface WebSocket
 
     /** @return the wiki where this websocket was registered. */
     String getWiki();
+
+    /** @return the query string parameters received from connection request. */
+    Map<String, List<String>> getParameters();
 
     /** @param message send a message on the websocket */
     void send(String message);

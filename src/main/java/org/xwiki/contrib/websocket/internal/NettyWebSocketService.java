@@ -19,63 +19,63 @@
  */
 package org.xwiki.contrib.websocket.internal;
 
-import java.util.Map;
-import java.util.HashMap;
 import java.io.File;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.inject.Named;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.slf4j.Logger;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-
-import org.xwiki.component.phase.Initializable;
+import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
-import org.xwiki.component.manager.ComponentManager;
-import org.xwiki.model.reference.DocumentReference;
-import org.xwiki.contrib.websocket.WebSocketHandler;
 import org.xwiki.component.internal.multi.ComponentManagerManager;
-import org.apache.commons.io.FileUtils;
+import org.xwiki.component.manager.ComponentManager;
+import org.xwiki.component.phase.Initializable;
+import org.xwiki.contrib.websocket.WebSocketHandler;
+import org.xwiki.model.reference.DocumentReference;
 
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpVersion;
-import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.ssl.SslContext;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.channel.ChannelFuture;
-import io.netty.buffer.Unpooled;
-import io.netty.util.CharsetUtil;
-import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.util.concurrent.GenericFutureListener;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.ssl.util.SelfSignedCertificate;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.EventLoopGroup;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.handler.logging.LoggingHandler;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.Channel;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
+import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.util.SelfSignedCertificate;
+import io.netty.util.CharsetUtil;
+import io.netty.util.concurrent.GenericFutureListener;
 
 
 @Component
@@ -118,6 +118,15 @@ public class NettyWebSocketService implements WebSocketService, Initializable
         keyByUserWiki.put(userWiki, key);
         userByKeyWiki.put(getKeyWiki(key, wiki), userRef);
         return key;
+    }
+
+    @Override
+    public DocumentReference getUser(String wiki, String key)
+    {
+        if (wiki == null || key == null) {
+            return null;
+        }
+        return userByKeyWiki.get(getKeyWiki(key, wiki));
     }
 
     private void checkCertChainAndPrivKey(File certChain, File privKey)
@@ -248,15 +257,12 @@ public class NettyWebSocketService implements WebSocketService, Initializable
 
         private void handleHttpReqB(ChannelHandlerContext ctx,
                                     FullHttpRequest req,
-                                    String wiki,
-                                    String handlerName,
-                                    String key,
-                                    DocumentReference user)
+                                    WebSocketRequest wsRequest)
         {
-            ComponentManager cm = this.nwss.compMgrMgr.getComponentManager("wiki:" + wiki, false);
+            ComponentManager cm = this.nwss.compMgrMgr.getComponentManager("wiki:" + wsRequest.getWiki(), false);
             if (cm == null) {
                 ByteBuf content = Unpooled.copiedBuffer(
-                    "ERROR: no wiki found named [" + wiki + "]", StandardCharsets.UTF_8);
+                    "ERROR: no wiki found named [" + wsRequest.getWiki() + "]", StandardCharsets.UTF_8);
                 sendHttpResponse(ctx, req,
                                  new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                                                              HttpResponseStatus.NOT_FOUND,
@@ -266,13 +272,13 @@ public class NettyWebSocketService implements WebSocketService, Initializable
 
             WebSocketHandler handler = null;
             try {
-                handler = cm.getInstance(WebSocketHandler.class, handlerName);
+                handler = cm.getInstance(WebSocketHandler.class, wsRequest.getHandlerName());
             } catch (Exception e) {
                 // fall through
             }
             if (handler == null) {
                 ByteBuf content = Unpooled.copiedBuffer(
-                    "ERROR: no registered component for path [" + handlerName + "]",
+                    "ERROR: no registered component for path [" + wsRequest.getHandlerName() + "]",
                     StandardCharsets.UTF_8);
                 sendHttpResponse(ctx, req,
                                  new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
@@ -291,7 +297,7 @@ public class NettyWebSocketService implements WebSocketService, Initializable
                 handshaker.handshake(ctx.channel(), req);
             }
 
-            this.nws = new NettyWebSocket(user, handlerName, ctx, key, wiki);
+            this.nws = new NettyWebSocket(wsRequest, ctx);
 
             try {
                 handler.onWebSocketConnect(this.nws);
@@ -318,24 +324,15 @@ public class NettyWebSocketService implements WebSocketService, Initializable
             }
 
             // Form: /wiki/handler?k=12345
-            String uri = req.getUri();
-            final String key = uri.substring(uri.indexOf("?k=") + 3);
-            uri = uri.substring(0, uri.indexOf("?k="));
-            final String handlerName = uri.substring(uri.lastIndexOf('/') + 1);
-            uri = uri.substring(0, uri.lastIndexOf('/'));
-            final String wiki = uri.substring(uri.lastIndexOf('/') + 1);
-            uri = uri.substring(0, uri.lastIndexOf('/'));
-            final DocumentReference user = this.nwss.userByKeyWiki.get(getKeyWiki(key, wiki));
+            WebSocketRequest wsRequest = new NettyWebSocketRequest(req, this.nwss);
 
             if (req.getMethod() != HttpMethod.GET) {
                 this.nwss.logger.debug("request method not GET");
-            } else if (!"".equals(uri)) {
-                this.nwss.logger.debug("leftover content after parsing URI");
-            } else if (user == null || key.indexOf('|') != -1) {
-                this.nwss.logger.debug("request from unknown user");
+            } else if (!wsRequest.isValid()) {
+                this.nwss.logger.debug("invalid URI, parsing failed");
             } else {
                 // success
-                handleHttpReqB(ctx, req, wiki, handlerName, key, user);
+                handleHttpReqB(ctx, req, wsRequest);
                 return;
             }
             // failure

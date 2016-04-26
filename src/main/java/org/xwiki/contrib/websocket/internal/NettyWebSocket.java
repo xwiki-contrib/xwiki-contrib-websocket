@@ -19,55 +19,83 @@
  */
 package org.xwiki.contrib.websocket.internal;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.contrib.websocket.WebSocket;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import org.xwiki.model.reference.DocumentReference;
+
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 
 public class NettyWebSocket implements WebSocket
 {
     private final Logger logger = LoggerFactory.getLogger(NettyWebSocket.class);
-    private final String key;
-    private final DocumentReference user;
-    private final String path;
-    private final String wiki;
+    private final WebSocketRequest wsRequest;
     private final ChannelHandlerContext ctx;
     private String currentMessage;
     private final List<WebSocket.Callback> messageHandlers = new ArrayList<WebSocket.Callback>();
     private final List<WebSocket.Callback> disconnectHandlers = new ArrayList<WebSocket.Callback>();
 
-    NettyWebSocket(DocumentReference user,
-                   String path,
-                   ChannelHandlerContext ctx,
-                   String key,
-                   String wiki)
+    NettyWebSocket(WebSocketRequest wsRequest,
+                   ChannelHandlerContext ctx)
     {
-        this.user = user;
-        this.path = path;
+        this.wsRequest = wsRequest;
         this.ctx = ctx;
-        this.key = key;
-        this.wiki = wiki;
     }
 
-    public DocumentReference getUser() { return this.user; }
-    public String getPath() { return this.path; }
-    public String getWiki() { return this.wiki; }
+    @Override
+    public DocumentReference getUser()
+    {
+        return this.wsRequest.getUser();
+    }
 
+    @Override
+    public String getPath()
+    {
+        return this.wsRequest.getHandlerName();
+    }
+
+    @Override
+    public String getWiki()
+    {
+        return this.wsRequest.getWiki();
+    }
+
+    @Override
+    public Map<String, List<String>> getParameters()
+    {
+        return this.wsRequest.getParameters();
+    }
+
+
+    @Override
     public void send(String message)
     {
         this.ctx.channel().writeAndFlush(new TextWebSocketFrame(message));
     }
 
-    public String recv() { return this.currentMessage; }
+    @Override
+    public String recv()
+    {
+        return this.currentMessage;
+    }
 
-    public void onMessage(WebSocket.Callback cb) { this.messageHandlers.add(cb); }
-    public void onDisconnect(WebSocket.Callback cb) { this.disconnectHandlers.add(cb); }
+    @Override
+    public void onMessage(WebSocket.Callback cb)
+    {
+        this.messageHandlers.add(cb);
+    }
+
+    @Override
+    public void onDisconnect(WebSocket.Callback cb)
+    {
+        this.disconnectHandlers.add(cb);
+    }
 
     void message(String msg)
     {
@@ -94,6 +122,4 @@ public class NettyWebSocket implements WebSocket
             }
         }
     }
-
-    String getKey() { return this.key; }
 }

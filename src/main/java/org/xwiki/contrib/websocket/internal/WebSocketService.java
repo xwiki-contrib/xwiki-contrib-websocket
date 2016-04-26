@@ -29,4 +29,9 @@ public interface WebSocketService
      * Get a token for connecting to the websocket based on the user's identity.
      */
     String getKey(String wiki, DocumentReference userRef);
+
+    /**
+     * @return the user matching that given token for the given wiki, or null if token is not valid.
+     */
+    DocumentReference getUser(String wiki, String key);
 }
