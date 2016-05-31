@@ -64,4 +64,10 @@ public class DefaultWebSocketConfig implements WebSocketConfig
     {
         return this.cs.getProperty("websocket.port", 8093);
     }
+
+    @Override
+    public int maxFrameSize()
+    {
+        return this.cs.getProperty("websocket.maxFrameSize", 20000000);
+    }
 }

@@ -53,4 +53,12 @@ public interface WebSocketConfig
 
     /** The port number to bind machine. */
     int getPort();
+
+    /**
+     * The mazimum size of a frame sent to the WebSocket.
+     * Keep this smallish to prevent DoS but bigger than the biggest realtime document
+     * you will edit.
+     * Default: 20MB
+     */
+    int maxFrameSize();
 }

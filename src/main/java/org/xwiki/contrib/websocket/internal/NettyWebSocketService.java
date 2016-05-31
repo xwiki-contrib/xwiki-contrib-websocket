@@ -63,6 +63,7 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.websocketx.ContinuationWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
@@ -234,6 +235,7 @@ public class NettyWebSocketService implements WebSocketService, Initializable
         private final NettyWebSocketService nwss;
         private WebSocketServerHandshaker handshaker;
         private NettyWebSocket nws;
+        private StringBuilder frames;
 
         public WebSocketServerHandler(NettyWebSocketService nwss)
         {
@@ -288,8 +290,8 @@ public class NettyWebSocketService implements WebSocketService, Initializable
             }
 
             String loc = getWebSocketLocation(req, this.nwss.conf.sslEnabled());
-            WebSocketServerHandshakerFactory wsFactory =
-                new WebSocketServerHandshakerFactory(loc, null, false);
+            WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
+                loc, null, false, this.nwss.conf.maxFrameSize());
             handshaker = wsFactory.newHandshaker(req);
             if (handshaker == null) {
                 WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
@@ -341,7 +343,7 @@ public class NettyWebSocketService implements WebSocketService, Initializable
                                                          HttpResponseStatus.FORBIDDEN));
         }
 
-        private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame)
+        private synchronized void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame)
         {
             // Check for closing frame
             if (frame instanceof CloseWebSocketFrame) {
@@ -350,6 +352,31 @@ public class NettyWebSocketService implements WebSocketService, Initializable
             }
             if (frame instanceof PingWebSocketFrame) {
                 ctx.channel().write(new PongWebSocketFrame(frame.content().retain()));
+                return;
+            }
+            if (!frame.isFinalFragment() || this.frames != null) {
+                final String msg;
+                if (frame instanceof TextWebSocketFrame) {
+                    msg = ((TextWebSocketFrame) frame).text();
+                } else if (frame instanceof ContinuationWebSocketFrame) {
+                    msg = ((ContinuationWebSocketFrame) frame).text();
+                } else {
+                    throw new UnsupportedOperationException(
+                        "unsupported frame fragment type " + frame.getClass().getName());
+                }
+                if (this.frames == null) {
+                    this.frames = new StringBuilder();
+                }
+                this.frames.append(msg);
+                if (this.frames.length() > this.nwss.conf.maxFrameSize()) {
+                    throw new RuntimeException("Frame size too big [" + this.frames.length() +
+                        "] max frame size [" + this.nwss.conf.maxFrameSize() + "]");
+                }
+                if (frame.isFinalFragment()) {
+                    final String fullMsg = this.frames.toString();
+                    this.frames = null;
+                    this.nws.message(fullMsg);
+                }
                 return;
             }
             if (!(frame instanceof TextWebSocketFrame)) {
