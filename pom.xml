@@ -41,6 +41,20 @@
     <url>https://github.com/xwiki-contrib/xwiki-contrib-websocket</url>
     <tag>HEAD</tag>
   </scm>
+  <developers>
+    <developer>
+      <id>cjdelisle</id>
+      <name>Caleb James DeLisle</name>
+    </developer>
+    <developer>
+      <id>dgervalle</id>
+      <name>Denis Gervalle</name>
+    </developer>
+    <developer>
+      <id>mouhb</id>
+      <name>Mohamed Boussaa</name>
+    </developer>  
+  </developers>
   <distributionManagement>
     <repository>
       <id>xwiki-staging</id>
