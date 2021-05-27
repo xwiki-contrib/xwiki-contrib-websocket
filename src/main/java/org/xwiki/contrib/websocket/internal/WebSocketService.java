@@ -22,16 +22,27 @@ package org.xwiki.contrib.websocket.internal;
 import org.xwiki.component.annotation.Role;
 import org.xwiki.model.reference.DocumentReference;
 
+/**
+ * The services that implements the WebSocket communication.
+ * 
+ * @version $Id$
+ */
 @Role
 public interface WebSocketService
 {
     /**
-     * Get a token for connecting to the websocket based on the user's identity.
+     * Get a token for connecting to the WebSocket based on the user's identity.
+     * 
+     * @param wiki the wiki to connect to
+     * @param userRef the user for which to retrieve the connection key
+     * @return the connection key for the specified user to the specified wiki
      */
     String getKey(String wiki, DocumentReference userRef);
 
     /**
-     * @return the user matching that given token for the given wiki, or null if token is not valid.
+     * @param wiki the wiki for which the connection key was generated
+     * @param key a connection key
+     * @return the user matching the given token for the given wiki, or {@code null} if the token is not valid.
      */
     DocumentReference getUser(String wiki, String key);
 }

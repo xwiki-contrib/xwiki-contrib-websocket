@@ -32,17 +32,26 @@ import org.xwiki.model.reference.DocumentReference;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 
+/**
+ * {@link WebSocket} implementation based on Netty.
+ * 
+ * @version $Id$
+ */
 public class NettyWebSocket implements WebSocket
 {
     private final Logger logger = LoggerFactory.getLogger(NettyWebSocket.class);
+
     private final WebSocketRequest wsRequest;
+
     private final ChannelHandlerContext ctx;
+
     private String currentMessage;
+
     private final List<WebSocket.Callback> messageHandlers = new ArrayList<WebSocket.Callback>();
+
     private final List<WebSocket.Callback> disconnectHandlers = new ArrayList<WebSocket.Callback>();
 
-    NettyWebSocket(WebSocketRequest wsRequest,
-                   ChannelHandlerContext ctx)
+    NettyWebSocket(WebSocketRequest wsRequest, ChannelHandlerContext ctx)
     {
         this.wsRequest = wsRequest;
         this.ctx = ctx;
@@ -71,7 +80,6 @@ public class NettyWebSocket implements WebSocket
     {
         return this.wsRequest.getParameters();
     }
-
 
     @Override
     public void send(String message)
@@ -104,8 +112,7 @@ public class NettyWebSocket implements WebSocket
             try {
                 cb.call(this);
             } catch (Exception e) {
-                logger.warn("Exception in WebSocket.onMessage() [{}]",
-                            ExceptionUtils.getStackTrace(e));
+                logger.warn("Exception in WebSocket.onMessage() [{}]", ExceptionUtils.getStackTrace(e));
             }
             this.currentMessage = null;
         }
@@ -117,8 +124,7 @@ public class NettyWebSocket implements WebSocket
             try {
                 cb.call(this);
             } catch (Exception e) {
-                logger.warn("Exception in WebSocket.onDisconnect() [{}]",
-                            ExceptionUtils.getStackTrace(e));
+                logger.warn("Exception in WebSocket.onDisconnect() [{}]", ExceptionUtils.getStackTrace(e));
             }
         }
     }

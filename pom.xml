@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
- *
  * See the NOTICE file distributed with this work for additional
  * information regarding copyright ownership.
  *
@@ -19,28 +18,19 @@
  * License along with this software; if not, write to the Free
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
- *
 -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>org.xwiki.commons</groupId>
-    <artifactId>xwiki-commons-pom</artifactId>
-    <version>7.1.2</version> <!-- see also xwiki.version -->
+    <groupId>org.xwiki.contrib</groupId>
+    <artifactId>parent-platform</artifactId>
+    <version>12.10</version>
   </parent>
-  <version>1.9-SNAPSHOT</version>
-  <groupId>org.xwiki.contrib</groupId>
   <artifactId>xwiki-contrib-websocket</artifactId>
   <name>WebSocket Integration</name>
-  <description>Allows you to create WebSocket enabled Applications in XWiki</description>
-
-  <scm>
-    <connection>scm:git:git://github.com/xwiki-contrib/xwiki-contrib-websocket.git</connection>
-    <developerConnection>scm:git:git@github.com:xwiki-contrib/xwiki-contrib-websocket.git</developerConnection>
-    <url>https://github.com/xwiki-contrib/xwiki-contrib-websocket</url>
-    <tag>HEAD</tag>
-  </scm>
+  <version>1.9-SNAPSHOT</version>
+  <description>Adds support for creating WebSocket enabled applications in XWiki</description>
   <developers>
     <developer>
       <id>cjdelisle</id>
@@ -55,123 +45,76 @@
       <name>Mohamed Boussaa</name>
     </developer>  
   </developers>
-  <distributionManagement>
-    <repository>
-      <id>xwiki-staging</id>
-      <name>XWiki Staging Repository</name>
-      <url>http://nexus.xwiki.org/nexus/service/local/staging/deploy/maven2/</url>
-    </repository>
-  </distributionManagement>
-
+  <scm>
+    <connection>scm:git:git://github.com/xwiki-contrib/xwiki-contrib-websocket.git</connection>
+    <developerConnection>scm:git:git@github.com:xwiki-contrib/xwiki-contrib-websocket.git</developerConnection>
+    <url>https://github.com/xwiki-contrib/xwiki-contrib-websocket</url>
+    <tag>HEAD</tag>
+  </scm>
   <properties>
-
-    <!-- Don't run CLIRR here since there's no Java code. -->
-    <xwiki.clirr.skip>true</xwiki.clirr.skip>
-    <!-- The Extension name. If not defined, the <name> property is used -->
+    <!-- The extension name shown in the Extension Manager -->
     <xwiki.extension.name>WebSocket Integration</xwiki.extension.name>
     <!-- The extension's category -->
-    <xwiki.extension.category>application</xwiki.extension.category>
-
-    <xwiki.version>7.1.2</xwiki.version> <!-- see also parent version -->
+    <xwiki.extension.category>api</xwiki.extension.category>
+    <checkstyle.suppressions.location>${basedir}/src/checkstyle/checkstyle-suppressions.xml</checkstyle.suppressions.location>
   </properties>
-
   <dependencies>
-
     <dependency>
       <groupId>org.xwiki.commons</groupId>
       <artifactId>xwiki-commons-component-api</artifactId>
-      <version>${xwiki.version}</version>
-      <scope>provided</scope>
+      <version>${commons.version}</version>
     </dependency>
-
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
     <dependency>
       <groupId>org.xwiki.platform</groupId>
       <artifactId>xwiki-platform-security-api</artifactId>
-      <version>${xwiki.version}</version>
-      <scope>provided</scope>
+      <version>${platform.version}</version>
     </dependency>
-
     <dependency>
       <groupId>org.xwiki.platform</groupId>
       <artifactId>xwiki-platform-bridge</artifactId>
-      <version>${xwiki.version}</version>
-      <scope>provided</scope>
+      <version>${platform.version}</version>
     </dependency>
-
     <dependency>
       <groupId>org.xwiki.platform</groupId>
       <artifactId>xwiki-platform-container-servlet</artifactId>
-      <version>${xwiki.version}</version>
-      <scope>provided</scope>
+      <version>${platform.version}</version>
     </dependency>
-
-    <!-- Used in XWikiWebSocketScriptService -->
     <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-servlet_3.0_spec</artifactId>
-      <version>1.0</version>
-      <scope>provided</scope>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+    </dependency>
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-all</artifactId>
-      <version>4.0.23.Final</version>
+      <version>4.1.65.Final</version>
     </dependency>
-
-
   </dependencies>
-
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>2.2</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-
-              <artifactSet>
-                <excludes>
-                  <exclude>org.slf4j.*</exclude>
-                  <exclude>ch.qos.*</exclude>
-                </excludes>
-              </artifactSet>
-
-              <relocations>
-                <relocation>
-                  <pattern>io.netty</pattern>
-                </relocation>
-              </relocations>
-
-            </configuration>
-          </execution>
-        </executions>
+        <groupId>org.revapi</groupId>
+        <artifactId>revapi-maven-plugin</artifactId>
+        <configuration>
+          <analysisConfiguration>
+            <revapi.ignore>
+              <item>
+                <code>java.field.visibilityReduced</code>
+                <old>field org.xwiki.contrib.websocket.script.XWikiWebSocketScriptService.GUEST_USER</old>
+                <new>field org.xwiki.contrib.websocket.script.XWikiWebSocketScriptService.GUEST_USER</new>
+                <justification>Should not have been made public.</justification>
+              </item>
+            </revapi.ignore>
+          </analysisConfiguration>
+        </configuration>
       </plugin>
-
-      <!--<plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-      </plugin>-->
-
     </plugins>
   </build>
-
 </project>

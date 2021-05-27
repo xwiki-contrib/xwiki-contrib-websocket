@@ -26,6 +26,8 @@ import org.xwiki.model.reference.DocumentReference;
 
 /**
  * The WebSocket which is passed to the registered WebSocketHandler.
+ * 
+ * @version $Id$
  */
 public interface WebSocket
 {
@@ -44,7 +46,7 @@ public interface WebSocket
     /** @param message send a message on the websocket */
     void send(String message);
 
-    /** @return null unless inside of onMessage() callback in which case return   */
+    /** @return null unless inside of onMessage() callback in which case return */
     String recv();
 
     /** @param cb a Callback to be called when a websocket message comes in for this handler. */

@@ -21,44 +21,51 @@ package org.xwiki.contrib.websocket.internal;
 
 import org.xwiki.component.annotation.Role;
 
+/**
+ * WebSocket configuration.
+ * 
+ * @version $Id$
+ */
 @Role
 public interface WebSocketConfig
 {
-    /** Whether SSL should be enabled. */
+    /**
+     * @return whether SSL should be enabled.
+     */
     boolean sslEnabled();
 
     /**
-     * The filename containing server's certificate in OpenSSL PEM format
-     * followed by whatever intermediate certificates are necessary.
+     * @return the filename containing server's certificate in OpenSSL PEM format followed by whatever intermediate
+     *         certificates are necessary.
      */
     String getCertChainFilename();
 
-    /** The filename of the SSL private key in OpenSSL PEM format. */
+    /**
+     * @return the filename of the SSL private key in OpenSSL PEM format.
+     */
     String getPrivateKeyFilename();
 
-    /** The IP address to bind to, in case of a machine with multiple interfaces. */
+    /**
+     * @return the IP address to bind to, in case of a machine with multiple interfaces.
+     */
     String getBindTo();
 
     /**
-     * The external websocket URL to be advertised to clients, the default will be the
-     * server's hostname and 'ws' oe 'wss' depending on whether ssl is enabled but in
-     * the event that the websocket is tunneled through a different machine or the
-     * hostname is not the actual domain, this allows it to be specified manually.
-     *
-     * Examples include:
-     * ws://my.website.com:5678/
-     * wss://123.45.67.8:5556/
+     * @return the external WebSocket URL to be advertised to clients; the default will be the server's host name and
+     *         'ws' or 'wss' depending on whether SSL is enabled but in the event that the WebSocket is tunneled through
+     *         a different machine or the host name is not the actual domain, this allows it to be specified manually;
+     *         examples include: ws://my.website.com:5678/ wss://123.45.67.8:5556/
      */
     String getExternalPath();
 
-    /** The port number to bind machine. */
+    /**
+     * @return the port number to bind machine.
+     */
     int getPort();
 
     /**
-     * The mazimum size of a frame sent to the WebSocket.
-     * Keep this smallish to prevent DoS but bigger than the biggest realtime document
-     * you will edit.
-     * Default: 20MB
+     * @return the maximum size of a frame sent to the WebSocket; keep this small to prevent DoS but bigger than the
+     *         biggest real-time document you will edit; default is 20MB
      */
     int maxFrameSize();
 }

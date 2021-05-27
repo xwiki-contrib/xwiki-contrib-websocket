@@ -20,10 +20,18 @@
 package org.xwiki.contrib.websocket.internal;
 
 import javax.inject.Inject;
-import org.xwiki.configuration.ConfigurationSource;
-import org.xwiki.component.annotation.Component;
+import javax.inject.Singleton;
 
+import org.xwiki.component.annotation.Component;
+import org.xwiki.configuration.ConfigurationSource;
+
+/**
+ * Default {@link WebSocketConfig} implementation.
+ * 
+ * @version $Id$
+ */
 @Component
+@Singleton
 public class DefaultWebSocketConfig implements WebSocketConfig
 {
     @Inject
