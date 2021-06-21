@@ -43,7 +43,7 @@
     <developer>
       <id>mouhb</id>
       <name>Mohamed Boussaa</name>
-    </developer>  
+    </developer>
   </developers>
   <scm>
     <connection>scm:git:git://github.com/xwiki-contrib/xwiki-contrib-websocket.git</connection>
@@ -110,6 +110,28 @@
                 <old>field org.xwiki.contrib.websocket.script.XWikiWebSocketScriptService.GUEST_USER</old>
                 <new>field org.xwiki.contrib.websocket.script.XWikiWebSocketScriptService.GUEST_USER</new>
                 <justification>Should not have been made public.</justification>
+              </item>
+              <!-- For some reason we need to repeat this ignore 4 times otherwise revapi fails.. Could be related to
+                https://github.com/revapi/revapi/issues/220 -->
+              <item>
+                <code>java.method.removed</code>
+                <old>method java.lang.String org.xwiki.contrib.websocket.script.XWikiWebSocketScriptService::getDocumentKey(org.xwiki.model.reference.DocumentReference)</old>
+                <justification>It doesn't seem to be used anywhere anymore and it's not strictly related to WebSocket integration.</justification>
+              </item>
+              <item>
+                <code>java.method.removed</code>
+                <old>method java.lang.String org.xwiki.contrib.websocket.script.XWikiWebSocketScriptService::getDocumentKey(org.xwiki.model.reference.DocumentReference)</old>
+                <justification>It doesn't seem to be used anywhere anymore and it's not strictly related to WebSocket integration.</justification>
+              </item>
+              <item>
+                <code>java.method.removed</code>
+                <old>method java.lang.String org.xwiki.contrib.websocket.script.XWikiWebSocketScriptService::getDocumentKey(org.xwiki.model.reference.DocumentReference)</old>
+                <justification>It doesn't seem to be used anywhere anymore and it's not strictly related to WebSocket integration.</justification>
+              </item>
+              <item>
+                <code>java.method.removed</code>
+                <old>method java.lang.String org.xwiki.contrib.websocket.script.XWikiWebSocketScriptService::getDocumentKey(org.xwiki.model.reference.DocumentReference)</old>
+                <justification>It doesn't seem to be used anywhere anymore and it's not strictly related to WebSocket integration.</justification>
               </item>
             </revapi.ignore>
           </analysisConfiguration>

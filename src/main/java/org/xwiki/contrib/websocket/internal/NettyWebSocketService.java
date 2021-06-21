@@ -158,7 +158,7 @@ public class NettyWebSocketService implements WebSocketService, Initializable
         }
     }
 
-    private void initialize0() throws Exception
+    private void initializeInternal() throws Exception
     {
         final SslContext sslCtx;
         if (this.conf.sslEnabled()) {
@@ -207,7 +207,7 @@ public class NettyWebSocketService implements WebSocketService, Initializable
     public void initialize()
     {
         try {
-            initialize0();
+            initializeInternal();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

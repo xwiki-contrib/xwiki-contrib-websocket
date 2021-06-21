@@ -44,16 +44,18 @@ public class NettyWebSocketRequest implements WebSocketRequest
 
     private final Map<String, List<String>> parameters;
 
-    NettyWebSocketRequest(FullHttpRequest req, WebSocketService wss)
+    NettyWebSocketRequest(FullHttpRequest request, WebSocketService webSocketService)
     {
-        QueryStringDecoder dec = new QueryStringDecoder(req.uri());
+        QueryStringDecoder dec = new QueryStringDecoder(request.uri());
         parameters = dec.parameters();
+
         final List<String> keyParam = parameters.get("k");
         if (keyParam != null && keyParam.size() == 1) {
             key = keyParam.get(0);
         } else {
             key = null;
         }
+
         final String[] path = dec.path().split("/");
         if (path.length >= 2) {
             handlerName = path[path.length - 1];
@@ -62,7 +64,8 @@ public class NettyWebSocketRequest implements WebSocketRequest
             handlerName = null;
             wiki = null;
         }
-        user = wss.getUser(wiki, key);
+
+        user = webSocketService.getUser(wiki, key);
     }
 
     @Override

@@ -30,23 +30,23 @@ import org.xwiki.component.annotation.Role;
 public interface WebSocketConfig
 {
     /**
-     * @return whether SSL should be enabled.
+     * @return whether SSL should be enabled
      */
     boolean sslEnabled();
 
     /**
-     * @return the filename containing server's certificate in OpenSSL PEM format followed by whatever intermediate
-     *         certificates are necessary.
+     * @return the name of the file containing server's certificate in OpenSSL PEM format followed by whatever
+     *         intermediate certificates are necessary
      */
     String getCertChainFilename();
 
     /**
-     * @return the filename of the SSL private key in OpenSSL PEM format.
+     * @return the name of the file that holds the SSL private key in OpenSSL PEM format
      */
     String getPrivateKeyFilename();
 
     /**
-     * @return the IP address to bind to, in case of a machine with multiple interfaces.
+     * @return the IP address to bind to, useful when there are multiple network interfaces
      */
     String getBindTo();
 
@@ -59,7 +59,7 @@ public interface WebSocketConfig
     String getExternalPath();
 
     /**
-     * @return the port number to bind machine.
+     * @return the port number the WebSocket service should listen to
      */
     int getPort();
 

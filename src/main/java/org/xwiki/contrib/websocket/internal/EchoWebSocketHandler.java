@@ -27,7 +27,7 @@ import org.xwiki.contrib.websocket.WebSocket;
 import org.xwiki.contrib.websocket.WebSocketHandler;
 
 /**
- * Simple {@link WebSocketHandler} implementation that echoes the messages it receives.
+ * {@link WebSocketHandler} implementation that simply echoes the messages it receives.
  * 
  * @version $Id$
  */
@@ -37,16 +37,8 @@ import org.xwiki.contrib.websocket.WebSocketHandler;
 public class EchoWebSocketHandler implements WebSocketHandler
 {
     @Override
-    public void onWebSocketConnect(WebSocket sock)
+    public void onWebSocketConnect(WebSocket webSocket)
     {
-        sock.onMessage(new WebSocket.Callback()
-        {
-            @Override
-            public void call(WebSocket sock)
-            {
-                String msg = sock.recv();
-                sock.send(msg);
-            }
-        });
+        webSocket.onMessage(ws -> ws.send(ws.recv()));
     }
 }

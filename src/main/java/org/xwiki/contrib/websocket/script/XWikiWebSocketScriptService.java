@@ -19,15 +19,11 @@
  */
 package org.xwiki.contrib.websocket.script;
 
-import java.security.MessageDigest;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
-import javax.xml.bind.DatatypeConverter;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.xwiki.bridge.DocumentAccessBridge;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.component.internal.multi.ComponentManagerManager;
@@ -38,10 +34,10 @@ import org.xwiki.container.servlet.ServletRequest;
 import org.xwiki.contrib.websocket.WebSocketHandler;
 import org.xwiki.contrib.websocket.internal.WebSocketConfig;
 import org.xwiki.contrib.websocket.internal.WebSocketService;
+import org.xwiki.model.EntityType;
+import org.xwiki.model.ModelContext;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.script.service.ScriptService;
-import org.xwiki.security.authorization.AuthorizationManager;
-import org.xwiki.security.authorization.Right;
 
 /**
  * Exposes WebSocket related APIs to server-side scripts.
@@ -60,22 +56,53 @@ public class XWikiWebSocketScriptService implements ScriptService
 
     @Inject
     @Named("netty")
-    private WebSocketService sock;
+    private WebSocketService webSocketService;
 
     @Inject
     private ComponentManagerManager compMgrMgr;
 
     @Inject
-    private Container cont;
+    private ModelContext modelContext;
 
     @Inject
-    private WebSocketConfig conf;
+    private Container container;
 
     @Inject
-    private AuthorizationManager authMgr;
+    private WebSocketConfig config;
 
-    /** The master key used for creation of document keys. */
-    private String secret = RandomStringUtils.randomAlphanumeric(32);
+    /**
+     * Get the URL for accessing the WebSocket. The exact form of this URL results from the WebSocket configuration, the
+     * current wiki and the handlerName as well as the key which grants the user authorization to access the WebSocket.
+     * 
+     * @param handlerName the handler name (component hint)
+     * @return the URL that can be used to communicate with the specified handler
+     */
+    public String getURL(String handlerName)
+    {
+        String wiki = this.modelContext.getCurrentEntityReference().extractReference(EntityType.WIKI).getName();
+
+        checkHandlerExists(wiki, handlerName);
+
+        String externalPath = this.config.getExternalPath();
+        if (externalPath == null) {
+            HttpServletRequest hsr = ((ServletRequest) this.container.getRequest()).getHttpServletRequest();
+
+            String host = hsr.getHeader("host");
+            if (host.indexOf(':') != -1) {
+                host = host.substring(0, host.indexOf(':'));
+            }
+
+            String proto = "ws";
+            if (this.config.sslEnabled()) {
+                proto = "wss";
+            }
+
+            externalPath = String.format("%s://%s:%s/", proto, host, this.config.getPort());
+        } else if (!externalPath.endsWith("/")) {
+            externalPath += '/';
+        }
+        return externalPath + wiki + '/' + handlerName + "?k=" + this.webSocketService.getKey(wiki, getUser());
+    }
 
     /**
      * This will throw an error if the component does not exist which is more helpful than the error being thrown
@@ -101,61 +128,5 @@ public class XWikiWebSocketScriptService implements ScriptService
             user = GUEST_USER;
         }
         return user;
-    }
-
-    /**
-     * Get the URL for accessing the WebSocket. The exact form of this URL results from the WebSocket configuration, the
-     * current wiki and the handlerName as well as the key which grants the user authorization to access the WebSocket.
-     * 
-     * @param handlerName the handler name (component hint)
-     * @return the URL that can be used to communicate with the specified handler
-     */
-    public String getURL(String handlerName)
-    {
-        String wiki = this.bridge.getCurrentDocumentReference().getRoot().getName();
-
-        checkHandlerExists(wiki, handlerName);
-
-        String externalPath = this.conf.getExternalPath();
-        if (externalPath == null) {
-            HttpServletRequest hsr = ((ServletRequest) this.cont.getRequest()).getHttpServletRequest();
-
-            String host = hsr.getHeader("host");
-            if (host.indexOf(':') != -1) {
-                host = host.substring(0, host.indexOf(':'));
-            }
-
-            String proto = "ws";
-            if (this.conf.sslEnabled()) {
-                proto = "wss";
-            }
-
-            externalPath = String.format("%s://%s:%s/", proto, host, this.conf.getPort());
-        } else if (!externalPath.endsWith("/")) {
-            externalPath += '/';
-        }
-        return externalPath + wiki + '/' + handlerName + "?k=" + this.sock.getKey(wiki, getUser());
-    }
-
-    /**
-     * Get a token which corresponds to a document reference. If the current user does not have permission to access the
-     * document, this function will return the string "ENOPERM". The motivation is to allow a secret value for
-     * encryption or real-time channel creation so that users who are authorized and able to access the WebSocket are
-     * still not able to join WebSocket sessions based on documents for which they do not have edit access.
-     *
-     * @param ref a reference to the document to check.
-     * @return a base64 string or, if the user does not have access, "ENOPERM".
-     */
-    public String getDocumentKey(DocumentReference ref)
-    {
-        if (!this.authMgr.hasAccess(Right.EDIT, getUser(), ref)) {
-            return "ENOPERM";
-        }
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-            return DatatypeConverter.printBase64Binary(md.digest((this.secret + ref).getBytes()));
-        } catch (Exception e) {
-            throw new RuntimeException("should never happen");
-        }
     }
 }

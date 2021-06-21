@@ -47,9 +47,9 @@ public class NettyWebSocket implements WebSocket
 
     private String currentMessage;
 
-    private final List<WebSocket.Callback> messageHandlers = new ArrayList<WebSocket.Callback>();
+    private final List<WebSocket.Callback> messageHandlers = new ArrayList<>();
 
-    private final List<WebSocket.Callback> disconnectHandlers = new ArrayList<WebSocket.Callback>();
+    private final List<WebSocket.Callback> disconnectHandlers = new ArrayList<>();
 
     NettyWebSocket(WebSocketRequest wsRequest, ChannelHandlerContext ctx)
     {

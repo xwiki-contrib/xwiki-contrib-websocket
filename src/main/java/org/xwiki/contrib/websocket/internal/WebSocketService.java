@@ -31,13 +31,13 @@ import org.xwiki.model.reference.DocumentReference;
 public interface WebSocketService
 {
     /**
-     * Get a token for connecting to the WebSocket based on the user's identity.
+     * Get a token (key) for connecting to the WebSocket based on the user's identity.
      * 
      * @param wiki the wiki to connect to
-     * @param userRef the user for which to retrieve the connection key
+     * @param userReference the user for which to retrieve the connection key
      * @return the connection key for the specified user to the specified wiki
      */
-    String getKey(String wiki, DocumentReference userRef);
+    String getKey(String wiki, DocumentReference userReference);
 
     /**
      * @param wiki the wiki for which the connection key was generated
