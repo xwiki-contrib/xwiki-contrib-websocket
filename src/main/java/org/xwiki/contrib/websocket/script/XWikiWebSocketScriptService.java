@@ -21,16 +21,13 @@ package org.xwiki.contrib.websocket.script;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
 
 import org.xwiki.bridge.DocumentAccessBridge;
 import org.xwiki.component.annotation.Component;
-import org.xwiki.component.internal.multi.ComponentManagerManager;
 import org.xwiki.component.manager.ComponentLookupException;
 import org.xwiki.component.manager.ComponentManager;
-import org.xwiki.container.Container;
-import org.xwiki.container.servlet.ServletRequest;
 import org.xwiki.contrib.websocket.WebSocketHandler;
 import org.xwiki.contrib.websocket.internal.WebSocketConfig;
 import org.xwiki.contrib.websocket.internal.WebSocketService;
@@ -59,13 +56,11 @@ public class XWikiWebSocketScriptService implements ScriptService
     private WebSocketService webSocketService;
 
     @Inject
-    private ComponentManagerManager compMgrMgr;
+    @Named("context")
+    private Provider<ComponentManager> componentManagerProvider;
 
     @Inject
     private ModelContext modelContext;
-
-    @Inject
-    private Container container;
 
     @Inject
     private WebSocketConfig config;
@@ -79,45 +74,23 @@ public class XWikiWebSocketScriptService implements ScriptService
      */
     public String getURL(String handlerName)
     {
-        String wiki = this.modelContext.getCurrentEntityReference().extractReference(EntityType.WIKI).getName();
-
-        checkHandlerExists(wiki, handlerName);
+        checkHandlerExists(handlerName);
 
         String externalPath = this.config.getExternalPath();
-        if (externalPath == null) {
-            HttpServletRequest hsr = ((ServletRequest) this.container.getRequest()).getHttpServletRequest();
-
-            String host = hsr.getHeader("host");
-            if (host.indexOf(':') != -1) {
-                host = host.substring(0, host.indexOf(':'));
-            }
-
-            String proto = "ws";
-            if (this.config.sslEnabled()) {
-                proto = "wss";
-            }
-
-            externalPath = String.format("%s://%s:%s/", proto, host, this.config.getPort());
-        } else if (!externalPath.endsWith("/")) {
-            externalPath += '/';
-        }
+        String wiki = this.modelContext.getCurrentEntityReference().extractReference(EntityType.WIKI).getName();
         return externalPath + wiki + '/' + handlerName + "?k=" + this.webSocketService.getKey(wiki, getUser());
     }
 
     /**
      * This will throw an error if the component does not exist which is more helpful than the error being thrown
-     * somewhere deep inside of the WebSocket infra where it can only be printed to the log.
+     * somewhere deep inside of the WebSocket infrastructure where it can only be printed to the log.
      */
-    private void checkHandlerExists(String wiki, String handler)
+    private void checkHandlerExists(String handler)
     {
-        ComponentManager cm = this.compMgrMgr.getComponentManager("wiki:" + wiki, false);
-        if (cm == null) {
-            throw new RuntimeException("Could not find ComponentManager for this wiki.");
-        }
         try {
-            cm.getInstance(WebSocketHandler.class, handler);
+            this.componentManagerProvider.get().getInstance(WebSocketHandler.class, handler);
         } catch (ComponentLookupException e) {
-            throw new RuntimeException("Could not find a WebSocketHandler for [" + handler + "]");
+            throw new RuntimeException("Could not find a WebSocketHandler for [" + handler + "].");
         }
     }
 

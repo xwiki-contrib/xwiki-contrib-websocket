@@ -21,9 +21,12 @@ package org.xwiki.contrib.websocket.internal;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.servlet.http.HttpServletRequest;
 
 import org.xwiki.component.annotation.Component;
 import org.xwiki.configuration.ConfigurationSource;
+import org.xwiki.container.Container;
+import org.xwiki.container.servlet.ServletRequest;
 
 /**
  * Default {@link WebSocketConfig} implementation.
@@ -36,6 +39,9 @@ public class DefaultWebSocketConfig implements WebSocketConfig
 {
     @Inject
     private ConfigurationSource cs;
+
+    @Inject
+    private Container container;
 
     @Override
     public boolean sslEnabled()
@@ -64,7 +70,22 @@ public class DefaultWebSocketConfig implements WebSocketConfig
     @Override
     public String getExternalPath()
     {
-        return this.cs.getProperty("websocket.externalPath", String.class);
+        String externalPath = this.cs.getProperty("websocket.externalPath", String.class);
+        if (externalPath == null) {
+            String protocol = sslEnabled() ? "wss" : "ws";
+
+            HttpServletRequest request = ((ServletRequest) this.container.getRequest()).getHttpServletRequest();
+            String host = request.getHeader("host");
+            if (host.indexOf(':') != -1) {
+                host = host.substring(0, host.indexOf(':'));
+            }
+
+            externalPath = String.format("%s://%s:%s/", protocol, host, getPort());
+        } else if (!externalPath.endsWith("/")) {
+            externalPath += '/';
+        }
+
+        return externalPath;
     }
 
     @Override
