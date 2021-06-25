@@ -19,74 +19,33 @@
  */
 package org.xwiki.contrib.websocket;
 
-import java.util.List;
-import java.util.Map;
-
-import org.xwiki.model.reference.DocumentReference;
+import java.util.function.Consumer;
 
 /**
- * The WebSocket which is passed to the registered {@link WebSocketHandler}.
+ * The interface used by a {@link WebSocketHandler} to communicate with the client (receive and send back messages).
  * 
  * @version $Id$
  */
 public interface WebSocket
 {
     /**
-     * @return the user who accessed the WebSocket
-     */
-    DocumentReference getUser();
-
-    /**
-     * @return identifies the WebSocket handler using the component role hint
-     */
-    String getPath();
-
-    /**
-     * @return the wiki where this WebSocket was registered
-     */
-    String getWiki();
-
-    /**
-     * @return the query string parameters received with the connection request
-     */
-    Map<String, List<String>> getParameters();
-
-    /**
-     * Sends a message on the WebSocket.
+     * Sends a message on this WebSocket.
      * 
      * @param message the message to send
      */
     void send(String message);
 
     /**
-     * Call this inside the {@link #onMessage(Callback)} callback to access the received message.
+     * Execute some code each time a message is received on this WebSocket.
      * 
-     * @return the received message, when called from {@link #onMessage(Callback)}, {@code null} otherwise
+     * @param messageHandler the code that handles the received message
      */
-    String recv();
+    void onMessage(Consumer<String> messageHandler);
 
     /**
-     * Execute some code when WebSocket messages are received.
+     * Execute some code when the client disconnects from this WebSocket.
      * 
-     * @param callback the callback to be called when a WebSocket message comes in for this handler
+     * @param callback the code to execute when the client disconnects
      */
-    void onMessage(Callback callback);
-
-    /**
-     * Execute some code when the client disconnects.
-     * 
-     * @param callback the callback to be called when it is detected that the client has disconnected
-     */
-    void onDisconnect(Callback callback);
-
-    /**
-     * A callback function as an object.
-     */
-    interface Callback
-    {
-        /**
-         * @param webSocket the WebSocket that triggered the event (callback)
-         */
-        void call(WebSocket webSocket);
-    }
+    void onDisconnect(Runnable callback);
 }

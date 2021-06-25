@@ -21,13 +21,12 @@ package org.xwiki.contrib.websocket.internal;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.function.Consumer;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xwiki.contrib.websocket.WebSocket;
-import org.xwiki.model.reference.DocumentReference;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
@@ -39,92 +38,57 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
  */
 public class NettyWebSocket implements WebSocket
 {
-    private final Logger logger = LoggerFactory.getLogger(NettyWebSocket.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(NettyWebSocket.class);
 
-    private final WebSocketRequest wsRequest;
+    private final ChannelHandlerContext context;
 
-    private final ChannelHandlerContext ctx;
+    private final List<Consumer<String>> messageHandlers = new ArrayList<>();
 
-    private String currentMessage;
+    private final List<Runnable> disconnectHandlers = new ArrayList<>();
 
-    private final List<WebSocket.Callback> messageHandlers = new ArrayList<>();
-
-    private final List<WebSocket.Callback> disconnectHandlers = new ArrayList<>();
-
-    NettyWebSocket(WebSocketRequest wsRequest, ChannelHandlerContext ctx)
+    NettyWebSocket(ChannelHandlerContext context)
     {
-        this.wsRequest = wsRequest;
-        this.ctx = ctx;
-    }
-
-    @Override
-    public DocumentReference getUser()
-    {
-        return this.wsRequest.getUser();
-    }
-
-    @Override
-    public String getPath()
-    {
-        return this.wsRequest.getHandlerName();
-    }
-
-    @Override
-    public String getWiki()
-    {
-        return this.wsRequest.getWiki();
-    }
-
-    @Override
-    public Map<String, List<String>> getParameters()
-    {
-        return this.wsRequest.getParameters();
+        this.context = context;
     }
 
     @Override
     public void send(String message)
     {
-        this.ctx.channel().writeAndFlush(new TextWebSocketFrame(message));
+        this.context.channel().writeAndFlush(new TextWebSocketFrame(message));
     }
 
     @Override
-    public String recv()
+    public void onMessage(Consumer<String> messageHandler)
     {
-        return this.currentMessage;
+        this.messageHandlers.add(messageHandler);
     }
 
     @Override
-    public void onMessage(WebSocket.Callback cb)
+    public void onDisconnect(Runnable callback)
     {
-        this.messageHandlers.add(cb);
+        this.disconnectHandlers.add(callback);
     }
 
-    @Override
-    public void onDisconnect(WebSocket.Callback cb)
+    void message(String message)
     {
-        this.disconnectHandlers.add(cb);
-    }
-
-    void message(String msg)
-    {
-        for (WebSocket.Callback cb : this.messageHandlers) {
-            this.currentMessage = msg;
+        for (Consumer<String> messageHandler : this.messageHandlers) {
             try {
-                cb.call(this);
+                messageHandler.accept(message);
             } catch (Exception e) {
-                logger.warn("Exception in WebSocket.onMessage() [{}]", ExceptionUtils.getStackTrace(e));
+                LOGGER.warn("Exception in WebSocket.onMessage(). Root cause is [{}].",
+                    ExceptionUtils.getRootCauseMessage(e));
             }
-            this.currentMessage = null;
         }
     }
 
     void disconnect()
     {
-        for (WebSocket.Callback cb : this.disconnectHandlers) {
+        for (Runnable callback : this.disconnectHandlers) {
             try {
-                cb.call(this);
+                callback.run();
             } catch (Exception e) {
-                logger.warn("Exception in WebSocket.onDisconnect() [{}]", ExceptionUtils.getStackTrace(e));
+                LOGGER.warn("Exception in WebSocket.onDisconnect(). Root cause is [{}].",
+                    ExceptionUtils.getRootCauseMessage(e));
             }
         }
     }

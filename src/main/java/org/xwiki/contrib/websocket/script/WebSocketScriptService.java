@@ -17,40 +17,47 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.xwiki.contrib.websocket.internal;
+package org.xwiki.contrib.websocket.script;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.xwiki.bridge.DocumentAccessBridge;
 import org.xwiki.component.annotation.Component;
-import org.xwiki.contrib.websocket.WebSocket;
+import org.xwiki.contrib.websocket.WebSocketConfig;
 import org.xwiki.contrib.websocket.WebSocketHandler;
+import org.xwiki.contrib.websocket.internal.WebSocketURI;
 import org.xwiki.model.EntityType;
 import org.xwiki.model.ModelContext;
+import org.xwiki.script.service.ScriptService;
 
 /**
- * {@link WebSocketHandler} implementation that simply echoes the messages it receives.
+ * Exposes WebSocket related APIs to server-side scripts.
  * 
  * @version $Id$
  */
 @Component
 @Singleton
-@Named("echo")
-public class EchoWebSocketHandler implements WebSocketHandler
+@Named("websocket")
+public class WebSocketScriptService implements ScriptService
 {
     @Inject
-    private DocumentAccessBridge bridge;
+    private WebSocketConfig config;
 
     @Inject
     private ModelContext modelContext;
 
-    @Override
-    public void onConnect(WebSocket webSocket)
+    /**
+     * Get the URL for accessing the WebSocket. The exact form of this URL results from the WebSocket configuration, the
+     * current wiki and the handler component hint.
+     * 
+     * @param handler the hint of the {@link WebSocketHandler} component implementation
+     * @return the URL that can be used to communicate with the specified handler
+     */
+    public String getURL(String handler)
     {
-        String currentWiki = this.modelContext.getCurrentEntityReference().extractReference(EntityType.WIKI).getName();
-        webSocket.onMessage(message -> webSocket
-            .send(String.format("[%s] %s -> %s", currentWiki, this.bridge.getCurrentUserReference(), message)));
+        String externalPath = this.config.getExternalPath();
+        String wiki = this.modelContext.getCurrentEntityReference().extractReference(EntityType.WIKI).getName();
+        return new WebSocketURI(externalPath, wiki, handler).toString();
     }
 }

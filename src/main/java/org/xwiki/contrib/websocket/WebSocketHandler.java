@@ -20,11 +20,24 @@
 package org.xwiki.contrib.websocket;
 
 import org.xwiki.component.annotation.Role;
-import org.xwiki.contrib.websocket.internal.EchoWebSocketHandler;
 
 /**
- * Implement this role with your component in order to provide a WebSocket service. See the {@link EchoWebSocketHandler}
- * as an example.
+ * Implement this role in order to provide a WebSocket service. Here's an example of how you can implement a simple
+ * WebSocket handler that echoes the message it receives:
+ * 
+ * <pre>
+ * &#64;Component
+ * &#64;Singleton
+ * &#64;Named("echo")
+ * public class EchoWebSocketHandler implements WebSocketHandler
+ * {
+ *     &#64;Override
+ *     public void onConnect(WebSocket webSocket)
+ *     {
+ *         webSocket.onMessage(message -&#62; webSocket.send(message));
+ *     }
+ * }
+ * </pre>
  * 
  * @version $Id$
  */
@@ -37,5 +50,5 @@ public interface WebSocketHandler
      * 
      * @param webSocket the connected WebSocket to use for communication
      */
-    void onWebSocketConnect(WebSocket webSocket);
+    void onConnect(WebSocket webSocket);
 }

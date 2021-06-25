@@ -19,38 +19,48 @@
  */
 package org.xwiki.contrib.websocket.internal;
 
+import java.util.Collections;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.xwiki.bridge.DocumentAccessBridge;
 import org.xwiki.component.annotation.Component;
-import org.xwiki.contrib.websocket.WebSocket;
-import org.xwiki.contrib.websocket.WebSocketHandler;
-import org.xwiki.model.EntityType;
-import org.xwiki.model.ModelContext;
+import org.xwiki.observation.AbstractEventListener;
+import org.xwiki.observation.event.Event;
 
 /**
- * {@link WebSocketHandler} implementation that simply echoes the messages it receives.
+ * Triggers the initialization of the Netty-based WebSocket service.
  * 
  * @version $Id$
  */
 @Component
+@Named(NettyWebSocketServiceBootstrap.NAME)
 @Singleton
-@Named("echo")
-public class EchoWebSocketHandler implements WebSocketHandler
+public class NettyWebSocketServiceBootstrap extends AbstractEventListener
 {
-    @Inject
-    private DocumentAccessBridge bridge;
+    /**
+     * The name used to register this event listener.
+     */
+    public static final String NAME = "";
 
     @Inject
-    private ModelContext modelContext;
+    @SuppressWarnings("unused")
+    private NettyWebSocketService webSocketService;
+
+    /**
+     * Default constructor.
+     */
+    public NettyWebSocketServiceBootstrap()
+    {
+        // We don't listen to any events. We just want to trigger the initialization of the WebSocket service when this
+        // event listener component is instantiated by the component manager.
+        super(NAME, Collections.emptyList());
+    }
 
     @Override
-    public void onConnect(WebSocket webSocket)
+    public void onEvent(Event event, Object source, Object data)
     {
-        String currentWiki = this.modelContext.getCurrentEntityReference().extractReference(EntityType.WIKI).getName();
-        webSocket.onMessage(message -> webSocket
-            .send(String.format("[%s] %s -> %s", currentWiki, this.bridge.getCurrentUserReference(), message)));
+        // Nothing to do here because we're not listening to any event.
     }
 }

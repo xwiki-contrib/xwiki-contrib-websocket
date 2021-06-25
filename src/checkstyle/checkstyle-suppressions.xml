@@ -25,5 +25,5 @@
     "http://www.puppycrawl.com/dtds/suppressions_1_0.dtd">
 
 <suppressions>
-  <suppress checks="ClassFanOutComplexity|CyclomaticComplexity|NPathComplexity" files="NettyWebSocketService.java$"/>
+  <suppress checks="ClassFanOutComplexity" files="NettyWebSocketRequestHandler.java"/>
 </suppressions>

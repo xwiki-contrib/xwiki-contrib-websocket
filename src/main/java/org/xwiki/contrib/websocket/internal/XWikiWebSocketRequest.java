@@ -19,46 +19,17 @@
  */
 package org.xwiki.contrib.websocket.internal;
 
-import java.util.List;
-import java.util.Map;
-
-import org.xwiki.model.reference.DocumentReference;
+import com.xpn.xwiki.web.XWikiRequest;
 
 /**
- * Represents a request sent through a WebSocket.
- *
+ * A WebSocket request.
+ * 
  * @version $Id$
  */
-public interface WebSocketRequest
+public interface XWikiWebSocketRequest extends XWikiRequest
 {
     /**
-     * @return whether the request is valid
+     * @return the WebSocket URI
      */
-    boolean isValid();
-
-    /**
-     * @return the connection key
-     */
-    String getKey();
-
-    /**
-     * @return the target WebSocket handler specified using its component hint, that should receive the WebSocket
-     *         request
-     */
-    String getHandlerName();
-
-    /**
-     * @return the target wiki (where the WebSocket handler is registered / installed)
-     */
-    String getWiki();
-
-    /**
-     * @return the user making the request
-     */
-    DocumentReference getUser();
-
-    /**
-     * @return request parameters
-     */
-    Map<String, List<String>> getParameters();
+    WebSocketURI getWebSocketURI();
 }

@@ -59,16 +59,20 @@
     <checkstyle.suppressions.location>${basedir}/src/checkstyle/checkstyle-suppressions.xml</checkstyle.suppressions.location>
   </properties>
   <dependencies>
+    <!-- WebSocket handlers are implemented as components. -->
     <dependency>
       <groupId>org.xwiki.commons</groupId>
       <artifactId>xwiki-commons-component-api</artifactId>
       <version>${commons.version}</version>
     </dependency>
+    <!-- We need to initialize the XWikiContext for WebSocket handlers that may need it (e.g. to access the current user
+      or to access XWiki documents) -->
     <dependency>
       <groupId>org.xwiki.platform</groupId>
-      <artifactId>xwiki-platform-bridge</artifactId>
+      <artifactId>xwiki-platform-oldcore</artifactId>
       <version>${platform.version}</version>
     </dependency>
+    <!-- Used to get information about the current request (e.g. to build the WebSocket URL). -->
     <dependency>
       <groupId>org.xwiki.platform</groupId>
       <artifactId>xwiki-platform-container-servlet</artifactId>
@@ -106,6 +110,7 @@
                 <new>field org.xwiki.contrib.websocket.script.XWikiWebSocketScriptService.GUEST_USER</new>
                 <justification>Should not have been made public.</justification>
               </item>
+
               <!-- For some reason we need to repeat this ignore 4 times otherwise revapi fails.. Could be related to
                 https://github.com/revapi/revapi/issues/220 -->
               <item>
@@ -127,6 +132,122 @@
                 <code>java.method.removed</code>
                 <old>method java.lang.String org.xwiki.contrib.websocket.script.XWikiWebSocketScriptService::getDocumentKey(org.xwiki.model.reference.DocumentReference)</old>
                 <justification>It doesn't seem to be used anywhere anymore and it's not strictly related to WebSocket integration.</justification>
+              </item>
+
+              <item>
+                <code>java.class.removed</code>
+                <old>interface org.xwiki.contrib.websocket.WebSocket.Callback</old>
+                <justification>Replaced by Java standard interfaces (Consumer and Runnable)</justification>
+              </item>
+              <item>
+                <code>java.class.removed</code>
+                <old>interface org.xwiki.contrib.websocket.WebSocket.Callback</old>
+                <justification>Replaced by Java standard interfaces (Consumer and Runnable)</justification>
+              </item>
+
+              <item>
+                <code>java.method.removed</code>
+                <old>method java.util.Map&lt;java.lang.String, java.util.List&lt;java.lang.String&gt;&gt; org.xwiki.contrib.websocket.WebSocket::getParameters()</old>
+                <justification>Unused method that complicates the API</justification>
+              </item>
+              <item>
+                <code>java.method.removed</code>
+                <old>method java.util.Map&lt;java.lang.String, java.util.List&lt;java.lang.String&gt;&gt; org.xwiki.contrib.websocket.WebSocket::getParameters()</old>
+                <justification>Unused method that complicates the API</justification>
+              </item>
+
+              <item>
+                <code>java.method.removed</code>
+                <old>method java.lang.String org.xwiki.contrib.websocket.WebSocket::getPath()</old>
+                <justification>Unused method that complicates the API</justification>
+              </item>
+              <item>
+                <code>java.method.removed</code>
+                <old>method java.lang.String org.xwiki.contrib.websocket.WebSocket::getPath()</old>
+                <justification>Unused method that complicates the API</justification>
+              </item>
+
+              <item>
+                <code>java.method.removed</code>
+                <old>method org.xwiki.model.reference.DocumentReference org.xwiki.contrib.websocket.WebSocket::getUser()</old>
+                <justification>Use instead the XWiki API to get the current user.</justification>
+              </item>
+              <item>
+                <code>java.method.removed</code>
+                <old>method org.xwiki.model.reference.DocumentReference org.xwiki.contrib.websocket.WebSocket::getUser()</old>
+                <justification>Use instead the XWiki API to get the current user.</justification>
+              </item>
+              <item>
+                <code>java.method.removed</code>
+                <old>method org.xwiki.model.reference.DocumentReference org.xwiki.contrib.websocket.WebSocket::getUser()</old>
+                <justification>Use instead the XWiki API to get the current user.</justification>
+              </item>
+              <item>
+                <code>java.method.removed</code>
+                <old>method org.xwiki.model.reference.DocumentReference org.xwiki.contrib.websocket.WebSocket::getUser()</old>
+                <justification>Use instead the XWiki API to get the current user.</justification>
+              </item>
+
+              <item>
+                <code>java.method.removed</code>
+                <old>method java.lang.String org.xwiki.contrib.websocket.WebSocket::getWiki()</old>
+                <justification>Use instead the XWiki API to get the current wiki.</justification>
+              </item>
+              <item>
+                <code>java.method.removed</code>
+                <old>method java.lang.String org.xwiki.contrib.websocket.WebSocket::getWiki()</old>
+                <justification>Use instead the XWiki API to get the current wiki.</justification>
+              </item>
+              <item>
+                <code>java.method.removed</code>
+                <old>method java.lang.String org.xwiki.contrib.websocket.WebSocket::getWiki()</old>
+                <justification>Use instead the XWiki API to get the current wiki.</justification>
+              </item>
+
+              <item>
+                <code>java.method.parameterTypeChanged</code>
+                <old>parameter void org.xwiki.contrib.websocket.WebSocket::onDisconnect(===org.xwiki.contrib.websocket.WebSocket.Callback===)</old>
+                <new>parameter void org.xwiki.contrib.websocket.WebSocket::onDisconnect(===java.lang.Runnable===)</new>
+                <justification>Replaced custom callback interface with Java standard one</justification>
+              </item>
+              <item>
+                <code>java.method.parameterTypeChanged</code>
+                <old>parameter void org.xwiki.contrib.websocket.WebSocket::onMessage(===org.xwiki.contrib.websocket.WebSocket.Callback===)</old>
+                <new>parameter void org.xwiki.contrib.websocket.WebSocket::onMessage(===java.util.function.Consumer&lt;java.lang.String&gt;===)</new>
+                <justification>Replaces custom callback interface with Java standard one</justification>
+              </item>
+
+              <item>
+                <code>java.method.removed</code>
+                <old>method java.lang.String org.xwiki.contrib.websocket.WebSocket::recv()</old>
+                <justification>The message is now passed to the onMessage callback</justification>
+              </item>
+              <item>
+                <code>java.method.removed</code>
+                <old>method java.lang.String org.xwiki.contrib.websocket.WebSocket::recv()</old>
+                <justification>The message is now passed to the onMessage callback</justification>
+              </item>
+
+              <item>
+                <code>java.method.addedToInterface</code>
+                <new>method void org.xwiki.contrib.websocket.WebSocketHandler::onConnect(org.xwiki.contrib.websocket.WebSocket)</new>
+                <justification>Replaces onWebSocketConnect</justification>
+              </item>
+              <item>
+                <code>java.method.removed</code>
+                <old>method void org.xwiki.contrib.websocket.WebSocketHandler::onWebSocketConnect(org.xwiki.contrib.websocket.WebSocket)</old>
+                <justification>Renamed to onConnect</justification>
+              </item>
+
+              <item>
+                <code>java.class.removed</code>
+                <old>class org.xwiki.contrib.websocket.script.XWikiWebSocketScriptService</old>
+                <justification>Renamed to WebSocketScriptService</justification>
+              </item>
+              <item>
+                <code>java.class.removed</code>
+                <old>class org.xwiki.contrib.websocket.script.XWikiWebSocketScriptService</old>
+                <justification>Renamed to WebSocketScriptService</justification>
               </item>
             </revapi.ignore>
           </analysisConfiguration>

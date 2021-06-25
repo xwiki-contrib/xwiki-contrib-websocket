@@ -27,6 +27,7 @@ import org.xwiki.component.annotation.Component;
 import org.xwiki.configuration.ConfigurationSource;
 import org.xwiki.container.Container;
 import org.xwiki.container.servlet.ServletRequest;
+import org.xwiki.contrib.websocket.WebSocketConfig;
 
 /**
  * Default {@link WebSocketConfig} implementation.
