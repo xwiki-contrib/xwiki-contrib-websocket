@@ -19,15 +19,20 @@
  */
 package org.xwiki.contrib.websocket.internal;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
+import java.net.URI;
+import java.net.URL;
 
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.configuration.ConfigurationSource;
-import org.xwiki.container.Container;
-import org.xwiki.container.servlet.ServletRequest;
 import org.xwiki.contrib.websocket.WebSocketConfig;
+
+import com.xpn.xwiki.XWikiContext;
 
 /**
  * Default {@link WebSocketConfig} implementation.
@@ -39,10 +44,13 @@ import org.xwiki.contrib.websocket.WebSocketConfig;
 public class DefaultWebSocketConfig implements WebSocketConfig
 {
     @Inject
+    private Logger logger;
+
+    @Inject
     private ConfigurationSource cs;
 
     @Inject
-    private Container container;
+    private Provider<XWikiContext> xcontextProvider;
 
     @Override
     public boolean sslEnabled()
@@ -73,15 +81,21 @@ public class DefaultWebSocketConfig implements WebSocketConfig
     {
         String externalPath = this.cs.getProperty("websocket.externalPath", String.class);
         if (externalPath == null) {
-            String protocol = sslEnabled() ? "wss" : "ws";
+            try {
+                String scheme = sslEnabled() ? "wss" : "ws";
 
-            HttpServletRequest request = ((ServletRequest) this.container.getRequest()).getHttpServletRequest();
-            String host = request.getHeader("host");
-            if (host.indexOf(':') != -1) {
-                host = host.substring(0, host.indexOf(':'));
+                XWikiContext xcontext = this.xcontextProvider.get();
+                URL serverURL = xcontext.getURLFactory().getServerURL(xcontext);
+                String path = '/' + xcontext.getWiki().getWebAppPath(xcontext);
+
+                // We have to add the path afterwards because the URI constructor double encodes it.
+                // See https://bugs.openjdk.java.net/browse/JDK-8151244 (URI Constructor Doesn't Encode Path Correctly)
+                externalPath =
+                    new URI(scheme, null, serverURL.getHost(), getPort(), null, null, null).toString() + path;
+            } catch (Exception e) {
+                this.logger.warn("Failed to create WebSocket base URI. Root cause is [{}].",
+                    ExceptionUtils.getRootCauseMessage(e));
             }
-
-            externalPath = String.format("%s://%s:%s/", protocol, host, getPort());
         } else if (!externalPath.endsWith("/")) {
             externalPath += '/';
         }

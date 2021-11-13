@@ -40,7 +40,6 @@ import io.netty.channel.Channel;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 
@@ -167,12 +166,6 @@ public class NettyXWikiWebSocketRequest extends XWikiServletRequestStub implemen
     public int getContentLength()
     {
         return getIntHeader(HttpHeaderNames.CONTENT_LENGTH.toString());
-    }
-
-    @Override
-    public long getContentLengthLong()
-    {
-        return HttpUtil.getContentLength(this.request);
     }
 
     @Override

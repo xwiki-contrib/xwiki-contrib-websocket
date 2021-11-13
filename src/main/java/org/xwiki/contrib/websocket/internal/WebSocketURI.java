@@ -53,10 +53,10 @@ public class WebSocketURI
             path = "";
         }
         String[] pathSegments = path.split(SEPARATOR);
-        if (pathSegments.length >= 2) {
+        if (pathSegments.length >= 3 && "websocket".equals(pathSegments[pathSegments.length - 3])) {
             this.wiki = pathSegments[pathSegments.length - 2];
             this.handler = pathSegments[pathSegments.length - 1];
-            this.baseURI = webSocketURI.substring(0, webSocketURI.lastIndexOf(wiki + SEPARATOR + handler));
+            this.baseURI = webSocketURI.substring(0, webSocketURI.lastIndexOf(getPath()));
         } else {
             throw new URISyntaxException(webSocketURI,
                 "Invalid WebSocket URI: the path is missing the wiki and the WebSocket handler.");
@@ -80,7 +80,7 @@ public class WebSocketURI
     @Override
     public String toString()
     {
-        return this.baseURI + this.wiki + SEPARATOR + this.handler;
+        return this.baseURI + getPath();
     }
 
     /**
@@ -97,5 +97,10 @@ public class WebSocketURI
     public String getHandler()
     {
         return handler;
+    }
+
+    private String getPath()
+    {
+        return String.format("websocket/%s/%s", this.wiki, this.handler);
     }
 }
