@@ -29,7 +29,7 @@
   </parent>
   <artifactId>xwiki-contrib-websocket</artifactId>
   <name>WebSocket Integration</name>
-  <version>1.10-SNAPSHOT</version>
+  <version>1.9.1</version>
   <description>Adds support for creating WebSocket enabled applications in XWiki</description>
   <developers>
     <developer>
@@ -49,7 +49,7 @@
     <connection>scm:git:git://github.com/xwiki-contrib/xwiki-contrib-websocket.git</connection>
     <developerConnection>scm:git:git@github.com:xwiki-contrib/xwiki-contrib-websocket.git</developerConnection>
     <url>https://github.com/xwiki-contrib/xwiki-contrib-websocket</url>
-    <tag>HEAD</tag>
+    <tag>xwiki-contrib-websocket-1.9.1</tag>
   </scm>
   <properties>
     <!-- The extension name shown in the Extension Manager -->
