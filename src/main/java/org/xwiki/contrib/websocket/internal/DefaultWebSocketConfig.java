@@ -26,6 +26,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
@@ -43,6 +44,8 @@ import com.xpn.xwiki.XWikiContext;
 @Singleton
 public class DefaultWebSocketConfig implements WebSocketConfig
 {
+    private static final String PATH_SEPARATOR = "/";
+
     @Inject
     private Logger logger;
 
@@ -86,7 +89,9 @@ public class DefaultWebSocketConfig implements WebSocketConfig
 
                 XWikiContext xcontext = this.xcontextProvider.get();
                 URL serverURL = xcontext.getURLFactory().getServerURL(xcontext);
-                String path = '/' + xcontext.getWiki().getWebAppPath(xcontext);
+                // Prevent double slash at the start of the path (e.g. when XWiki is deployed as root application).
+                String path =
+                    PATH_SEPARATOR + StringUtils.stripStart(xcontext.getWiki().getWebAppPath(xcontext), PATH_SEPARATOR);
 
                 // We have to add the path afterwards because the URI constructor double encodes it.
                 // See https://bugs.openjdk.java.net/browse/JDK-8151244 (URI Constructor Doesn't Encode Path Correctly)
@@ -96,8 +101,8 @@ public class DefaultWebSocketConfig implements WebSocketConfig
                 this.logger.warn("Failed to create WebSocket base URI. Root cause is [{}].",
                     ExceptionUtils.getRootCauseMessage(e));
             }
-        } else if (!externalPath.endsWith("/")) {
-            externalPath += '/';
+        } else if (!externalPath.endsWith(PATH_SEPARATOR)) {
+            externalPath += PATH_SEPARATOR;
         }
 
         return externalPath;

@@ -59,6 +59,7 @@
     <checkstyle.suppressions.location>${basedir}/src/checkstyle/checkstyle-suppressions.xml</checkstyle.suppressions.location>
     <!-- Force the installation on root in order to ensure we start a single Netty server. -->
     <xwiki.extension.namespaces>{root}</xwiki.extension.namespaces>
+    <xwiki.jacoco.instructionRatio>0.05</xwiki.jacoco.instructionRatio>
     <!-- TODO: Drop this when upgrading the parent to 12.10 (which defines this property) -->
     <netty.version>4.1.48.Final</netty.version>
   </properties>
@@ -103,6 +104,13 @@
       <groupId>io.netty</groupId>
       <artifactId>netty-codec-http</artifactId>
       <version>${netty.version}</version>
+    </dependency>
+    <!-- Test dependencies -->
+    <dependency>
+      <groupId>org.xwiki.commons</groupId>
+      <artifactId>xwiki-commons-tool-test-component</artifactId>
+      <version>${commons.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <build>
