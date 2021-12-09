@@ -61,7 +61,7 @@
     <xwiki.extension.namespaces>{root}</xwiki.extension.namespaces>
     <xwiki.jacoco.instructionRatio>0.05</xwiki.jacoco.instructionRatio>
     <!-- TODO: Drop this when upgrading the parent to 12.10 (which defines this property) -->
-    <netty.version>4.1.48.Final</netty.version>
+    <netty.version>4.1.71.Final</netty.version>
   </properties>
   <dependencies>
     <!-- WebSocket handlers are implemented as components. -->
